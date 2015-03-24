@@ -1,2 +1,2 @@
 # nihol
-Light PHP framework
+Лёгкий PHP-фреймворк для создания веб-приложений.
