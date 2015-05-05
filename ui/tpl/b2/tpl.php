@@ -5,17 +5,15 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="BWEB v.1.2">
-    <meta name="author" content="ICT-TJ">
     <?php $UI->show('meta'); ?>
-    <link rel="icon" href="<?php echo $conf['tpl']; ?>/img/icons/favicon.png">
+    <link rel="icon" href="<?php echo $conf['tpl']; ?>/img/ico/b2.png">
 
     <title><?php $UI->show('title'); ?></title>
 
     <!-- Bootstrap core CSS -->
-    <link href="<?php echo UIPATH; ?>/extra/bootstrap/v3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="./ui/extra/bootstrap/v3/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap theme -->
-    <link href="<?php echo UIPATH; ?>/extra/bootstrap/v3/css/bootstrap-theme.min.css" rel="stylesheet">
+    <link href="./ui/extra/bootstrap/v3/css/bootstrap-theme.min.css" rel="stylesheet">
     <!-- Custom styles for this template -->
     <link href="<?php echo $conf['tpl']; ?>/css/style.css" rel="stylesheet">
     <?php $UI->show('link'); ?>
@@ -48,7 +46,7 @@
             <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Info <span class="caret"></span></a>
               <ul class="dropdown-menu" role="menu">
-                <li><a href="./?c=page&act=ciscophone">How to call via Cisco VoIP phone</a></li>
+                <li><a href="./?c=page&act=about">About</a></li>
                 <li><a href="./?c=page&act=faq">FAQ</a></li>
               </ul>
             </li>
