@@ -3,6 +3,7 @@ class CORE {
 
 	private static $inst; // instance for singleton
     private $messages=array('error'=>'','info'=>'','debug'=>'');
+    private $modules=array('user'=>0);
 
     private function __construct() {
         spl_autoload_register('CORE::AutoLoader');
@@ -49,8 +50,8 @@ class CORE {
         }
     }
 
-    public static function isValid($str='',$pattern='/^[a-zA-Z0-9_]+$/'){ // ClassName validation method
-        if(preg_match($pattern,$str)==1){return true;} else {return false;}
+    public static function isValid($str,$regex='/^[a-zA-Z0-9_]+$/'){
+        if(preg_match($regex,$str)){ return true; } else {return false;}
     }
 
     public static function msg($type='debug',$txt='') {
@@ -76,7 +77,7 @@ class CORE {
                 case 'debug': $style=' class="alert alert-warning alert-dismissable"'; $title=$type; break;
             }
             $title=strtoupper($title);
-$s1='<div'.$style.' role="alert">
+$s1='<div'.$style.' style="margin-top:18px;" role="alert">
 <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
 <strong>'.$title.':</strong><br>
 ';
@@ -84,6 +85,10 @@ $s1='<div'.$style.' role="alert">
             $result=$s1.$result.$s2;
         }
         echo $result;
+    }
+
+    public function get_modules(){
+        return $this->modules;
     }
 
     public function includes(){
@@ -110,56 +115,50 @@ public static function init($mode=0){
     if(isset($_COOKIE['PHPSESSID'])){SESSION::start();}
   }
 }
-public static function start(){
-  if(session_id()==''){
-    session_start();
-    CORE::msg('debug','session start'); //session_id()
-    //CORE::msg('debug',session_save_path());
-    // session_id()
-    // $_COOKIE["PHPSESSID"]
-    // session_save_path(), sys_get_temp_dir()
-    // session_destroy();
-    // unset($_COOKIE['PHPSESSID']);
-    // setcookie("PHPSESSID", "", 1);
+    public static function start(){
+        if(session_id()==''){
+        session_start();
+        CORE::msg('debug','session start'); //session_id()
+        //CORE::msg('debug',session_save_path());
+        // session_id()
+        // $_COOKIE["PHPSESSID"]
+        // session_save_path(), sys_get_temp_dir()
+        // session_destroy();
+        // unset($_COOKIE['PHPSESSID']);
+        // setcookie("PHPSESSID", "", 1);
 
-    // or this would remove all the variables in the session, but not the session itself
-    // session_unset();
+        // or this would remove all the variables in the session, but not the session itself
+        // session_unset();
 
-    // this would destroy the session variables
-    // session_destroy();
+        // this would destroy the session variables
+        // session_destroy();
 
-  }
-}
-public static function get($key=""){
-  $result="";
-  if(SESSION::isValidKey($key)){
-    if(isset($_SESSION[PREFX.$key])){$result=$_SESSION[PREFX.$key];}
-  }
-  return $result;
-}
-public static function get_all(){
-  $len=strlen(PREFX);
-  foreach($_SESSION as $key=>$val){if(substr($key,0,$len)==PREFX){$session_params[$key]=$val;}}
-  if(isset($session_params)) {return $session_params;} else {return array();}
-}
-public static function set($key,$val){
-  if(SESSION::isValidKey($key)){
-  $_SESSION[PREFX.$key]=$val;
-  }
-}
-public static function remove($key){
-  if(SESSION::isValidKey($key)){
-  unset($_SESSION[PREFX.$key]);
-  }
-}
-public static function remove_all(){
-  $len=strlen(PREFX);
-  foreach($_SESSION as $key=>$val){if(substr($key,0,$len)==PREFX){unset($_SESSION[$key]);}}
-}
-public static function isValidKey($key){
-  if($key!="" && preg_match('/^[A-Za-z0-9_]+$/',$key)){
-    return true;
-  } else {return flase;}
-}
-
+        }
+    }
+    public static function get($key=""){
+      $result="";
+      if(CORE::isValid($key)){
+        if(isset($_SESSION[PREFX.$key])){$result=$_SESSION[PREFX.$key];}
+      }
+      return $result;
+    }
+    public static function get_all(){
+      $len=strlen(PREFX);
+      foreach($_SESSION as $key=>$val){if(substr($key,0,$len)==PREFX){$session_params[$key]=$val;}}
+      if(isset($session_params)) {return $session_params;} else {return array();}
+    }
+    public static function set($key,$val){
+      if(CORE::isValid($key)){
+      $_SESSION[PREFX.$key]=$val;
+      }
+    }
+    public static function remove($key){
+      if(CORE::isValid($key)){
+      unset($_SESSION[PREFX.$key]);
+      }
+    }
+    public static function remove_all(){
+      $len=strlen(PREFX);
+      foreach($_SESSION as $key=>$val){if(substr($key,0,$len)==PREFX){unset($_SESSION[$key]);}}
+    }
 }
