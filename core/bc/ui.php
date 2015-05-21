@@ -12,9 +12,10 @@ class UI {
         'title'=>'',
         'js'=>'',
         'mainmenu'=>'',
+        'user1'=>'',
         'main'=>'',
         );
-    private $pages=array();
+    private $pages=array('home'=>'home');
 
     public static function init() {
         if(empty(self::$inst)) {
@@ -48,9 +49,9 @@ class UI {
         if(isset($this->pages[$alias])){
             $path=ADIR.'/pages/'.$this->pages[$alias].'.php';
             if(is_readable($path)){
-                if(\USER::init()->acl()){
+                if(USER::init()->acl()){
                     include($path);
-                    \CORE::msg('debug','Include page: '.$this->pages[$alias]);
+                    // \CORE::msg('debug','Include page: '.$this->pages[$alias]);
                 }
             } else {
                 \CORE::msg('error','Page not found');

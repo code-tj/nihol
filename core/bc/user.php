@@ -38,6 +38,11 @@ class USER {
         return $result;
     }
 
+    public function auth(){
+        $result = ($this->uid > 0 ? true : false);
+        return $result;
+    }
+
     public function acl(){
         $acl=true;
         // ...

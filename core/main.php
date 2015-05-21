@@ -9,5 +9,4 @@ $UI=\CORE\BC\UI::init();
 $APP=\CORE\BC\APP::init();
 
 $CORE::unload();
-//$CORE->includes();
 if($UI->tpl()!=''){include($UI->tpl());}

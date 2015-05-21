@@ -4,6 +4,7 @@ class CORE {
 	private static $inst; // instance for singleton
     private $messages=array('error'=>'','info'=>'','debug'=>'');
     private $modules=array('user'=>0);
+    public $dbcon=false;
 
     private function __construct() {
         spl_autoload_register('CORE::AutoLoader');
@@ -43,7 +44,7 @@ class CORE {
                 //CORE::msg('debug','AutoLoader: '.$class);
                 } else {
                     CORE::msg('debug','Can not find required class: '.$class);
-                    ///echo $path.'<br>';
+                    //CORE::msg('debug','Required path: '.$path);
                 }
         } else {
             CORE::msg('debug','Not valid class required: '.$class);
@@ -102,7 +103,8 @@ $s1='<div'.$style.' style="margin-top:18px;" role="alert">
     }
 
     public static function unload(){
-        //if($conf['db_con']){DB::init()->close();}
+        //CORE::init()->includes();
+        if(CORE::init()->dbcon){DB::init()->close();}
     }
 
 }
@@ -118,8 +120,9 @@ public static function init($mode=0){
     public static function start(){
         if(session_id()==''){
         session_start();
-        CORE::msg('debug','session start'); //session_id()
-        //CORE::msg('debug',session_save_path());
+        CORE::msg('debug','starting session'); //session_id()
+        // session_id(uniqid());
+        // \CORE::msg('debug',session_save_path());
         // session_id()
         // $_COOKIE["PHPSESSID"]
         // session_save_path(), sys_get_temp_dir()
@@ -161,4 +164,93 @@ public static function init($mode=0){
       $len=strlen(PREFX);
       foreach($_SESSION as $key=>$val){if(substr($key,0,$len)==PREFX){unset($_SESSION[$key]);}}
     }
+    public static function info(){
+        if(isset($_SESSION)){
+            \CORE::msg('debug','session_id: '.session_id());
+            foreach($_SESSION as $k => $v){
+                \CORE::msg('debug','$_SESSION["'.$k.'"] = '.$v);
+            }
+        }
+    }
+}
+
+class SEC {
+    private static $inst;
+
+    private function __construct() {
+        
+    }
+
+    public static function init() {
+        if(empty(self::$inst)) {
+            self::$inst = new self();
+        }
+        return self::$inst;
+    }
+
+    public static function check($REQUEST){
+        return true; // temp
+    }
+
+}
+
+class DB {
+
+private static $inst;
+
+private $connected=false;
+private $queries=0;
+public $dbh=null;
+
+public static function init() {
+    if(empty(self::$inst)) {
+        self::$inst = new self();
+    }
+    return self::$inst;
+}
+
+private function __construct(){
+    $this->connect();
+}
+
+private function connect(){
+    global $conf;
+    try {
+        $dsn='mysql:host='.$conf['db_server'].';dbname='.$conf['db_name'];
+        // .';charset='.$conf['db_charset']
+
+        // PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8',
+        $opt=array(         
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        );
+        $this->dbh = new PDO($dsn,$conf['db_user'],$conf['db_pass'],$opt);
+        ///$this->dbh->query('SET character_set_connection = '.$conf['db_charset'].';');
+        ///$this->dbh->query('SET character_set_client = '.$conf['db_charset'].';');
+        ///$this->dbh->query('SET character_set_results = '.$conf['db_charset'].';');
+        $this->dbh->query('SET NAMES '.$conf['db_charset']);
+        $this->connected=true;
+        CORE::init()->dbcon=true;
+        CORE::msg('debug','Connecting to database');
+    } catch(PDOException $e) {
+        CORE::msg('error','Some problems with db connection (check configuration)');
+        CORE::msg('debug',$e->getMessage());
+    }
+    // after initializing DB cleaning db configuration parameters ( sec. reasons =)
+    $conf['db_server']=''; $conf['db_name']=''; $conf['db_user']=''; $conf['db_pass']='';
+}
+
+public function connected(){ return $this->connected; }
+
+public function query_count($q=0){ if($q==0){$this->queries++;} else {$this->queries+=(int) $q;} }
+
+public function close(){
+    if($this->dbh!=null){
+        $this->dbh=null;
+        $this->connected=false;
+        CORE::init()->dbcon=false;
+        CORE::msg('debug','Closing db connection (queries: '.$this->queries.')');
+    }
+}
+
 }
