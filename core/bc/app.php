@@ -60,7 +60,7 @@ class ROUTER {
 					$path['c']=$p1.'C\\'.$p2.'_C';
 				}
                     if(class_exists($path['c'])){
-                        if(\SEC::init()->check($REQUEST)){ // access control ($USER)
+                        if(\SEC::init()->acl($REQUEST->get('c'),$REQUEST->get('act'))){ // access control ($USER)
                             if(class_exists($path['m'])){ $model = new $path['m'](); }
                             if(class_exists($path['v'])){ $view = new $path['v'](); }
                             $controller = new $path['c']($REQUEST,$model,$view);
@@ -80,7 +80,10 @@ class ROUTER {
 class APP {
 
     private static $inst;
-    private $modules=array('test'=>1);
+    private $modules=array(
+        'tb'=>1,
+        'es'=>1
+        );
 
     public static function init() {
         if(empty(self::$inst)) {

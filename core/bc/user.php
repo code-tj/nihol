@@ -8,7 +8,7 @@ class USER {
     private $uid=0; // user id
     private $gid=0; // group id
     private $pid=0; // profile id
-    private $name=''; // username
+    private $username=''; // username
 
     public static function init() {
         if(empty(self::$inst)) {
@@ -27,7 +27,7 @@ class USER {
             $value=\SESSION::get('pid');
             if($value!=''){$this->pid=(int) $value;}
             $value=\SESSION::get('user');
-            if($value!=''){$this->name=$value;}
+            if($value!=''){$this->username=$value;}
         }
         \CORE::msg('debug','USER (uid:'.$this->uid.'; gid:'.$this->uid.';)');
     }
@@ -41,12 +41,6 @@ class USER {
     public function auth(){
         $result = ($this->uid > 0 ? true : false);
         return $result;
-    }
-
-    public function acl(){
-        $acl=true;
-        // ...
-        return $acl;
     }
 
 }

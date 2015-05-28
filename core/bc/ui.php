@@ -13,6 +13,7 @@ class UI {
         'js'=>'',
         'mainmenu'=>'',
         'user1'=>'',
+        'user2'=>'',
         'main'=>'',
         );
     private $pages=array('home'=>'home');
@@ -38,6 +39,10 @@ class UI {
     }
 
     public function tpl(){ return $this->tpl; }
+    public function get_pages(){ return $this->pages; }
+    //public function set_page($alias,$name){
+    //    $this->pages[$alias]=$name;
+    //}
 
     public function show($name='main'){
         if(isset($this->pos[$name])){
@@ -49,7 +54,7 @@ class UI {
         if(isset($this->pages[$alias])){
             $path=ADIR.'/pages/'.$this->pages[$alias].'.php';
             if(is_readable($path)){
-                if(USER::init()->acl()){
+                if(true){ // \SEC::init()->acl('page',$alias)
                     include($path);
                     // \CORE::msg('debug','Include page: '.$this->pages[$alias]);
                 }

@@ -78,7 +78,7 @@ class CORE {
                 case 'debug': $style=' class="alert alert-warning alert-dismissable"'; $title=$type; break;
             }
             $title=strtoupper($title);
-$s1='<div'.$style.' style="margin-top:18px;" role="alert">
+$s1='<div'.$style.' role="alert">
 <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
 <strong>'.$title.':</strong><br>
 ';
@@ -105,6 +105,10 @@ $s1='<div'.$style.' style="margin-top:18px;" role="alert">
     public static function unload(){
         //CORE::init()->includes();
         if(CORE::init()->dbcon){DB::init()->close();}
+    }
+
+    public function test($str=''){
+        \CORE\BC\UI::init()->pos['main'].=(htmlspecialchars($str)."<br>");
     }
 
 }
@@ -188,8 +192,40 @@ class SEC {
         return self::$inst;
     }
 
-    public static function check($REQUEST){
-        return true; // temp
+    public function acl($c='',$act=''){
+        $result=false;
+        $name=$c.','.$act;
+        \CORE::msg('debug','Checking acl: '.$name);
+        $USER=\CORE\BC\USER::init();
+        $uid=$USER->get('uid');
+        $gid=$USER->get('gid');
+        //dafault acl settings
+            $group_acl[',']=1;
+            if($gid==0) {$group_acl['user,login']=1;} else {
+                $group_acl['user,logout']=1;
+                $group_acl['user,profile']=1;
+            }
+            if($gid==1) {$group_acl['*,*']=1;}
+        // loading acl
+            // ...
+        // allow
+            // user
+            if(isset($user_acl[$name])){
+                if($user_acl[$name]==1){
+                    $result=true;
+                }
+            }
+            // group
+            if(isset($group_acl['*,*'])){if($group_acl['*,*']==1){$result=true;}}
+            if(isset($group_acl[$name])){
+                if($group_acl[$name]==1){
+                    $result=true;
+                }
+            }
+        // deny
+            // ...
+        if(!$result) \CORE::msg('error','Access denied');
+        return $result;
     }
 
 }

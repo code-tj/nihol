@@ -20,6 +20,15 @@ public function __construct($REQUEST,$model,$view){
 		case 'logout':
 			$model->logout();
 		break;
+		case 'profile':
+			$view->profile($model);
+		break;
+		case 'manage':
+			$view->manage_users($model);
+		break;
+		case 'groups':
+			$view->manage_groups($model);
+		break;
 	}	
 }
 
