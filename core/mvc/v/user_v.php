@@ -7,24 +7,12 @@ public static function user_menu(){
 	$UI=\CORE\BC\UI::init();
 	$USER=\CORE\BC\USER::init();
 	if($USER->auth()){
-		if($USER->get('gid')==1){
-			$UI->pos['user2'].='<li class="dropdown">
-			  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="true">
-			  Administration 
-			  <span class="caret"></span></a>
-			  <ul class="dropdown-menu" role="menu">
-			    <li><a href="./?c=user&act=manage">Manage users</a></li>
-			    <li><a href="./?c=user&act=groups">Manage groups</a></li>
-			  </ul>
-			</li>
-			<!--<li><a href="#about">About</a></li>-->';
-		}
 	/*
 	$UI->pos['user1']='<form class="navbar-form">
-		<a href="./?c=user&act=logout" class="btn btn-success">Sign out</a>
+		<a href="./?c=user&act=logout" class="btn btn-success">'.\CORE::init()->lang('signout','Sign out').'</a>
 	</form>';
 	*/
-	$UI->pos['user1']='<form class="navbar-form">
+	$UI->pos['user1'].='<form class="navbar-form">
 		<div class="dropdown">
 		  <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
 		    '.$USER->get('username').'
@@ -33,47 +21,58 @@ public static function user_menu(){
 		  <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
 		    <li role="usermenu">
 		    	<a role="menuitem" tabindex="-1" href="./?c=user&act=profile">
-		    		<small><i class="glyphicon glyphicon-user"></i>&nbsp;</small> <span class="text">Profile</span>
+		    		<small><i class="glyphicon glyphicon-user"></i>&nbsp;</small> <span class="text">'.\CORE::init()->lang('profile','Profile').'</span>
 		    	</a>
 		    </li>
 		    <!--
 		    <li role="usermenu">
 		    	<a role="menuitem" tabindex="-1" href="#">
-		    		<small><i class="glyphicon glyphicon-cog"></i>&nbsp;</small> <span class="text">Settings</span>
+		    		<small><i class="glyphicon glyphicon-cog"></i>&nbsp;</small> <span class="text">'.\CORE::init()->lang('settings','Settings').'</span>
 		    	</a>
 		    </li>
 		    -->
 		    <li role="usermenu" class="divider"></li>
 		    <li role="usermenu">
 		    	<a role="menuitem" tabindex="-1" href="./?c=user&act=logout">
-		    		<small><i class="glyphicon glyphicon-off"></i>&nbsp;</small> <span class="text">Sign out</span>
+		    		<small><i class="glyphicon glyphicon-off"></i>&nbsp;</small> <span class="text">'.\CORE::init()->lang('signout','Sign out').'</span>
 		    	</a>
 		    </li>
 		  </ul>
 		</div>
 	</form>';
-	$UI->pos['user2'].='<li class="dropdown">
-	  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="true">
-	  Modules 
-	  <span class="caret"></span></a>
-	  <ul class="dropdown-menu" role="menu">
-	    <li><a href="./?c=tb">Telephone billing</a></li>
-	    <li><a href="./?c=es">Events schedule</a></li>
-	  </ul>
-	</li>';
 	} else {
-	$UI->pos['user1']='<form action="./?c=user&act=login" method="post" class="navbar-form">
+	$UI->pos['user1'].='<form action="./?c=user&act=login" method="post" class="navbar-form">
+		<div class="form-group">
+			<div class="dropdown">
+			  <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-expanded="true">
+			    <i></i>&nbsp;<small>Язык</small>
+			    <span class="caret"></span>
+			  </button>
+			  <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu2">
+					<li role="usermenu">
+						<a role="menuitem" tabindex="-1" href="./?lang=ru">
+							<i class="langflag langflag-ru"></i>&nbsp;<small>Русский</small>
+						</a>
+					</li>
+					<li role="usermenu">
+			    	<a role="menuitem" tabindex="-1" href="./?lang=tj">
+			    		<i class="langflag langflag-tj"></i>&nbsp;<small>Тоҷикӣ</small>
+			    	</a>
+			    </li>
+			  </ul>
+			</div>
+		</div>
 	    <div class="form-group">
-	      <input type="text" name="login" placeholder="Login" class="form-control">
+	      <input type="text" name="login" placeholder="'.\CORE::init()->lang('login','Login').'" class="form-control">
 	    </div>
 	    <div class="form-group">
-	      <input type="password" name="password" placeholder="Password" class="form-control">
+	      <input type="password" name="password" placeholder="'.\CORE::init()->lang('password','Password').'" class="form-control">
 	    </div>
-	    <button type="submit" class="btn btn-success">Sign in</button>
+	    <button type="submit" class="btn btn-success">'.\CORE::init()->lang('signin','Sign in').'</button>
 	  </form>
 	';
 	}
-	
+
 }
 
 public function profile($model){
@@ -87,14 +86,24 @@ public function profile($model){
 public function manage_users($model){
 	if($model!=null){
 		//\CORE::init()->msg('debug','Managing users accounts');
-		
+
 	}
 }
 
 public function manage_groups($model){
 	if($model!=null){
-		//\CORE::init()->msg('debug','Managing user groups');
-		\CORE::init()->test('Groups...');
+		$UI=\CORE\BC\UI::init();
+		$groups=$model->get_groups();
+		$count=count($groups);
+		$UI->pos['main'].='<div class="btn-group" role="group" aria-label="...">
+  <button id="new_group" type="button" class="btn btn-default"
+  data-toggle="modal" data-target="#myModal">New</button>
+</div>'.$UI::modal();
+		if($count>0){
+			//... show table
+		} else {
+			$UI->pos['main'].='<h4 class="text-danger">No records found in the database</h4>';
+		}
 	}
 }
 

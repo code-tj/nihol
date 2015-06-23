@@ -90,4 +90,20 @@ public function CheckPassword($password){
 	if($len>=8 && $len<255){ return true; } else { return false; }
 }
 
+public function get_groups(){
+	$groups=array();
+	$DB=\DB::init();
+	if($DB->connected()){
+		$sql="SELECT * FROM `n-groups` ORDER BY `gp-sort`;";
+		$sth=$DB->dbh->prepare($sql);
+		$sth->execute();
+		if($sth->rowCount()>0){
+			while($r=$sth->fetch()){
+				$groups[$r['gp-gid']]=$r['gp-group'];
+			}
+		}
+	}
+	return $groups;
+}
+
 }

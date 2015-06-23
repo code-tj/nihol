@@ -2,32 +2,30 @@
 class CORE {
 
 	private static $inst; // instance for singleton
-    private $messages=array('error'=>'','info'=>'','debug'=>'');
-    private $modules=array('user'=>0);
+
+    private $msg_arr=array('error'=>'','info'=>'','debug'=>'');
+    // modules: =>0 - core; =>1 - app;
+    private $modules=array('user'=>0,'page'=>0);
+
     public $dbcon=false;
+
+    public $lang='en';
+		public $langfile=false;
+		public $lng=array();
 
     private function __construct() {
         spl_autoload_register('CORE::AutoLoader');
-
     }
 
     public static function init() {
         if(empty(self::$inst)) {
             self::$inst = new self();
             // additional
-            CORE::CheckMode(NL_MODE);
+            CORE::CheckMode(N_MODE);
             SESSION::init();
+            CORE::CheckLang();
         }
         return self::$inst; // singleton pattern
-    }
-
-    public static function CheckMode($mode=0) {
-    	switch($mode){
-			case 1: // Maintenance mode
-				echo 'Maintenance... We\'ll be back soon.';
-				exit;
-			break;
-		}
     }
 
     public static function AutoLoader($class) {
@@ -35,11 +33,11 @@ class CORE {
             $class=strtolower(str_replace('\\', '/', $class));
             $path='';
             if(substr($class,0,5)=='core/'){
-                $path=CDIR.'/'.substr($class,5).'.php';
+                $path=DIR_CORE.'/'.substr($class,5).'.php';
             } elseif(substr($class,0,4)=='app/') {
-                $path=ADIR.'/'.substr($class,4).'.php';
+                $path=DIR_APP.'/'.substr($class,4).'.php';
             }
-                if(is_readable($path)) { 
+                if(is_readable($path)) {
                 require $path;
                 //CORE::msg('debug','AutoLoader: '.$class);
                 } else {
@@ -51,42 +49,77 @@ class CORE {
         }
     }
 
+    public static function msg($type='debug',$msg='') {
+        if($msg!=''){
+            if($type=='debug' && N_DEBUG==0) { return; }
+            if(isset(CORE::init()->msg_arr[$type])){
+                CORE::init()->msg_arr[$type].=htmlspecialchars($msg)."<br>\n";
+            }
+        }
+    }
+
+    public static function get_msg_arr(){ return CORE::init()->msg_arr; }
+
+    public static function CheckLang(){
+        $langs=array('en'=>'English');
+        if(isset($GLOBALS['langs'])) $langs=$GLOBALS['langs'];
+        reset($langs);
+        CORE::init()->lang=key($langs);
+        // set current language
+        $ln=SESSION::get('lang');
+        if($ln!=''){
+            if(in_array($ln,$langs)){
+                CORE::init()->lang=$ln;
+            }
+        }
+        if(isset($_GET['lang'])){
+            $ln=trim($_GET['lang']);
+            if(isset($langs[$ln])){
+                CORE::init()->lang=$ln;
+                SESSION::set('lang',CORE::init()->lang); // or use cookies
+            }
+        }
+        CORE::msg('debug','language: '.CORE::init()->lang);
+    }
+
+
+    
+
+		public static function lang($alias,$dval=''){
+			$lang=CORE::init()->lang;
+			if(!CORE::init()->langfile){
+				if(is_readable(DIR_CORE.'/lng/'.$lang.'.php')){
+					include(DIR_CORE.'/lng/'.$lang.'.php');
+					CORE::init()->lng=$lng;
+					CORE::init()->langfile=true;
+					CORE::msg('debug','language file loaded');
+				}
+			}
+			if(isset(CORE::init()->lng[$alias])){
+				return CORE::init()->lng[$alias];
+			} else {
+				return $dval;
+			}
+		}
+
+    public static function CheckMode($mode=0) {
+    	switch($mode){
+			case 1: // Maintenance mode
+				echo 'Maintenance... We\'ll be back soon.';
+				exit;
+			break;
+		}
+    }
+
+    
+
     public static function isValid($str,$regex='/^[a-zA-Z0-9_]+$/'){
         if(preg_match($regex,$str)){ return true; } else {return false;}
     }
 
-    public static function msg($type='debug',$txt='') {
-        $txt=trim($txt);
-        if(NL_DEBUG==0 && $type=='debug') { return; }
-        if( $txt!='' && isset(CORE::init()->messages[$type]) ) {
-            CORE::init()->messages[$type].=htmlspecialchars($txt)."<br>\n";
-        }
-    }
+    
 
-    public static function show($type='') {
-        $result='';
-        if($type!='') {
-            if(isset(CORE::init()->messages[$type])) {
-                $result.=CORE::init()->messages[$type];
-            }
-        }
-        if($result!='') {
-            $style=''; $title='';
-            switch ($type) {
-                case 'info': $style=' class="alert alert-info alert-dismissable"'; $title=$type; break;
-                case 'error': $style=' class="alert alert-danger alert-dismissable"'; $title=$type; break;
-                case 'debug': $style=' class="alert alert-warning alert-dismissable"'; $title=$type; break;
-            }
-            $title=strtoupper($title);
-$s1='<div'.$style.' role="alert">
-<button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-<strong>'.$title.':</strong><br>
-';
-            $s2="</div>\n";
-            $result=$s1.$result.$s2;
-        }
-        echo $result;
-    }
+    
 
     public function get_modules(){
         return $this->modules;
@@ -182,7 +215,7 @@ class SEC {
     private static $inst;
 
     private function __construct() {
-        
+
     }
 
     public static function init() {
@@ -256,7 +289,7 @@ private function connect(){
         // .';charset='.$conf['db_charset']
 
         // PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8',
-        $opt=array(         
+        $opt=array(
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
         );

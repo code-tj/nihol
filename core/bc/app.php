@@ -82,12 +82,15 @@ class APP {
     private static $inst;
     private $modules=array(
         'tb'=>1,
-        'es'=>1
+        'es'=>1, 
         );
 
     public static function init() {
         if(empty(self::$inst)) {
             self::$inst = new self();
+            if(is_readable(DIR_APP.'/main.php')){
+                include(DIR_APP.'/main.php'); // init
+            }
         }
         return self::$inst;
     }
@@ -96,7 +99,7 @@ class APP {
     	$modules=array_merge(\CORE::init()->get_modules(), $this->modules);
     	$REQUEST = new REQUEST();
         ROUTER::init($REQUEST,$modules); // check modules
-        \CORE\MVC\V\USER_V::user_menu(); // shows user menu (sign in/out form)
+        \CORE\MVC\V\USER_V::user_menu(); // shows sign in/out form
     }
 
 }
