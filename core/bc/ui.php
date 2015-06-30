@@ -21,6 +21,7 @@ class UI {
     public static function init() {
         if(empty(self::$inst)) {
             self::$inst = new self();
+            // init
             \CORE::init()->msg('debug','ui initialization');
         }
         return self::$inst;
@@ -34,7 +35,7 @@ class UI {
             if(is_readable(PATH_UI.'/tpl/default/tpl.php')){
                 $this->tpl=PATH_UI.'/tpl/default/tpl.php';
             } else {
-                echo 'Template not found<br>';
+                echo 'Template not found';
             }
         }
     }
@@ -74,14 +75,15 @@ class UI {
 
     public function tpl(){ return $this->tpl; }
     public function get_pages(){ return $this->pages; }
-    //public function set_page($alias,$name){
-    //    $this->pages[$alias]=$name;
-    //}
 
     public function show($name='main'){
-        if(isset($this->pos[$name])){
-            echo $this->pos[$name];
-        }
+        if(isset($this->pos[$name])){ echo $this->pos[$name]; }
+    }
+
+    public function show_template(){
+        global $conf,$start;
+        $UI=\CORE\BC\UI::init();
+        if($UI->tpl()!=''){include($UI->tpl());}
     }
 
     public function static_page($alias=''){
@@ -90,13 +92,13 @@ class UI {
             if(is_readable($path)){
                 if(true){ // \SEC::init()->acl('page',$alias)
                     include($path);
-                    // \CORE::msg('debug','Include page: '.$this->pages[$alias]);
+                    // \CORE::msg('debug','include page: '.$this->pages[$alias]);
                 }
             } else {
-                \CORE::msg('error','Page not found');
+                \CORE::msg('error','Page is not found');
             }
         } else {
-            \CORE::msg('error','Page not found');
+            \CORE::msg('error','Page is not available');
         }
     }
 
@@ -125,8 +127,5 @@ class UI {
     ';
         return $result;
     }
-
-    // add some method to show specific menu
-
 
 }

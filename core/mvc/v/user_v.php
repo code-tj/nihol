@@ -34,7 +34,7 @@ public static function user_menu(){
 		    <li role="usermenu" class="divider"></li>
 		    <li role="usermenu">
 		    	<a role="menuitem" tabindex="-1" href="./?c=user&act=logout">
-		    		<small><i class="glyphicon glyphicon-off"></i>&nbsp;</small> <span class="text">'.\CORE::init()->lang('signout','Sign out').'</span>
+		    		<small><i class="glyphicon glyphicon-off"></i>&nbsp;</small> <span class="text">'.\CORE::init()->lang('logout','Logout').'</span>
 		    	</a>
 		    </li>
 		  </ul>
@@ -68,7 +68,7 @@ public static function user_menu(){
 	    <div class="form-group">
 	      <input type="password" name="password" placeholder="'.\CORE::init()->lang('password','Password').'" class="form-control">
 	    </div>
-	    <button type="submit" class="btn btn-success">'.\CORE::init()->lang('signin','Sign in').'</button>
+	    <button type="submit" class="btn btn-success">'.\CORE::init()->lang('login','login').'</button>
 	  </form>
 	';
 	}

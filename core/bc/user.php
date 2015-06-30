@@ -18,28 +18,31 @@ class USER {
     }
 
     private function __construct() {
-        // if isAuth() true
-        $value=\SESSION::get('uid');
-        if($value!=''){$this->uid=(int) $value;}
-        if($this->uid>0){
-        	$value=\SESSION::get('gid');
-            if($value!=''){$this->gid=(int) $value;}
-            $value=\SESSION::get('pid');
-            if($value!=''){$this->pid=(int) $value;}
-            $value=\SESSION::get('user');
-            if($value!=''){$this->username=$value;}
+        $uid=\SESSION::get('uid');
+        if($uid!=''){
+            $this->uid=(int) $uid;
+            if($this->uid>0){
+                $gid=\SESSION::get('gid');
+                if($gid!='') $this->gid=(int) $gid;
+                $pid=\SESSION::get('pid');
+                if($pid!='') $this->pid=(int) $pid;
+                $user=\SESSION::get('user');
+                if($user!='') $this->username=$user;
+            }
         }
-        \CORE::msg('debug','USER (uid:'.$this->uid.'; gid:'.$this->uid.';)');
+        \CORE::msg('debug','user (uid:'.$this->uid.'; gid:'.$this->gid.';)');
     }
 
     public function get($item){
-        $result='';
-        if(isset($this->$item)) $result=$this->$item;
-        return $result;
+        if(isset($this->$item)) {
+            return $result=$this->$item;
+        } else {
+            return '';
+        }
     }
 
     public function auth(){
-        $result = ($this->uid > 0 ? true : false);
+        $result=($this->uid > 0 ? true : false);
         return $result;
     }
 

@@ -13,15 +13,16 @@ class CORE {
 	public $langfile=false;
 	public $lng=array();
 
-    private function __construct() {
-        spl_autoload_register('CORE::AutoLoader');
-    }
+    //private function __construct() {}
+    //private function __clone() {}
+    //private function __wakeup() {}
 
     public static function init() {
         if(empty(self::$inst)) {
             self::$inst = new self();
-            // additional
+            // initialization
             CORE::check_mode();
+            spl_autoload_register('CORE::AutoLoader');
             CORE::msg('debug','core initialization');
             SESSION::init();
             CORE::check_lang();
@@ -31,29 +32,27 @@ class CORE {
 
     public static function check_mode() {
         switch(N_MODE){
-            case 1: // Maintenance mode
-                echo 'Maintenance... We\'ll be back soon.';
-                exit;
+            case 1:
+                echo 'Currently down for maintenance.'; exit;
             break;
         }
     }
 
     public static function AutoLoader($class) {
         if(CORE::isValid($class,'/^[\\a-zA-Z0-9]+$/')){
-            $class=strtolower(str_replace('\\', '/', $class));
+            $cls=strtolower(str_replace('\\', '/', $class));
             $path='';
-            if(substr($class,0,5)=='core/'){
-                $path=DIR_CORE.'/'.substr($class,5).'.php';
-            } elseif(substr($class,0,4)=='app/') {
-                $path=DIR_APP.'/'.substr($class,4).'.php';
+            if(substr($cls,0,5)=='core/'){
+                $path=DIR_CORE.'/'.substr($cls,5).'.php';
+            } elseif(substr($cls,0,4)=='app/') {
+                $path=DIR_APP.'/'.substr($cls,4).'.php';
             }
-                if(is_readable($path)) {
+            if(is_readable($path)) {
                 require $path;
-                //CORE::msg('debug','AutoLoader: '.$class);
-                } else {
-                    CORE::msg('debug','Can not find required class: '.$class);
-                    //CORE::msg('debug','Required path: '.$path);
-                }
+                //CORE::msg('debug','autoloader: '.$class); 
+            } else {
+                CORE::msg('debug','Can not find required class: '.$class);
+            }
         } else {
             CORE::msg('debug','Not valid class name required: '.$class);
         }
@@ -86,18 +85,19 @@ class CORE {
         }
     }
 
-	public static function lang($alias,$default=''){
-		$lang=CORE::init()->lang;
-		if(!CORE::init()->langfile){
+	public function lang($alias,$default=''){
+		$lang=$this->lang;
+		if(!$this->langfile){
 			if(is_readable(DIR_CORE.'/lang/'.$lang.'.php')){
 				include(DIR_CORE.'/lang/'.$lang.'.php');
-				CORE::init()->lng=$lng;
-				CORE::init()->langfile=true;
+				$this->lng=$lng;
+				$this->langfile=true;
 				//CORE::msg('debug','core language file loaded');
-			} else { CORE::msg('debug','core language file not loaded'); }
+			} else { CORE::msg('debug','core language file is not loaded'); }
 		}
-		if(isset(CORE::init()->lng[$alias])){
-			return CORE::init()->lng[$alias];
+        //CORE::msg('debug','lng: '.$alias);
+		if(isset($this->lng[$alias])){
+			return $this->lng[$alias];
 		} else {
 			return $default;
 		}
@@ -115,36 +115,27 @@ class CORE {
         }
     }
 
-    public static function unload(){
-        //CORE::init()->includes();
-        if(CORE::init()->dbcon){DB::init()->close();}
-    }
-
-    public function test($str=''){
-        \CORE\BC\UI::init()->pos['main'].=(htmlspecialchars($str)."<br>");
+    public function unload(){
+        // what if php exit()... maybe needs some register_shutdown_function()
+        //$this->includes();
+        if($this->dbcon){DB::init()->close();}
     }
 
 }
 
 class SESSION {
-public static function init($mode=0){
-  if($mode==1){
-    SESSION::start();
-  } else {
-    // if(isset($_COOKIE[PREFX.'st'])){SESSION::start();}
-    if(isset($_COOKIE['PHPSESSID'])){SESSION::start();}
-  }
-}
+    public static function init(){
+        // if(isset($_COOKIE[PREFX.'st'])){SESSION::start();}
+        if(isset($_COOKIE['PHPSESSID'])){SESSION::start();}
+    }
     public static function start(){
         if(session_id()==''){
         session_start();
-        // CORE::msg('debug','starting session: '.session_id());
         CORE::msg('debug','starting session');
-        // uniqid(),session_save_path(),sys_get_temp_dir(),session_id()
         }
     }
     public static function get($key=""){
-      $result="";
+      $result='';
       if(CORE::isValid($key)){
         if(isset($_SESSION[PREFX.$key])){$result=$_SESSION[PREFX.$key];}
       }
@@ -172,6 +163,7 @@ public static function init($mode=0){
     public static function info(){
         if(isset($_SESSION)){
             \CORE::msg('debug','session_id: '.session_id());
+            // session_id(),session_save_path(),sys_get_temp_dir(),uniqid()
             foreach($_SESSION as $k => $v){
                 \CORE::msg('debug','$_SESSION["'.$k.'"] = '.$v);
             }
@@ -238,11 +230,12 @@ public $dbh=null;
 public static function init() {
     if(empty(self::$inst)) {
         self::$inst = new self();
+        
     }
     return self::$inst;
 }
 
-private function __construct(){
+private function __construct() {
     $this->connect();
 }
 

@@ -13,5 +13,5 @@ $USER=\CORE\BC\USER::init();
 $UI=\CORE\BC\UI::init();
 $APP=\CORE\BC\APP::init();
 
-$CORE::unload();
-if($UI->tpl()!=''){include($UI->tpl());}
+$CORE->unload();
+$UI->show_template();

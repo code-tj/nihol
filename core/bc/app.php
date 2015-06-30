@@ -14,7 +14,7 @@ class REQUEST {
     			$this->c=$c; // controller
     			if(isset($_GET['act'])){
 		    		$act=trim($_GET['act']);
-		    		if(\CORE::isValid($act,'/^[a-z]+$/')){
+		    		if(\CORE::isValid($act,'/^[a-zA-Z0-9]+$/')){
 		    			$this->act=$act; // action	    			
 		    		} else {\CORE::msg('error','Unregistered action');}
 		    	}
@@ -81,10 +81,6 @@ class ROUTER {
 class APP {
 
     private static $inst;
-    private $modules=array(
-        'tb'=>1,
-        'es'=>1, 
-        );
 
     public static function init() {
         if(empty(self::$inst)) {
@@ -97,10 +93,10 @@ class APP {
     }
 
     private function __construct() {
-    	$modules=array_merge(\CORE::init()->get_modules(), $this->modules);
+    	$modules=\CORE::init()->get_modules();
     	$REQUEST = new REQUEST();
         ROUTER::init($REQUEST,$modules); // check modules
-        \CORE\MVC\V\USER_V::user_menu(); // shows sign in/out form
+        \CORE\MVC\V\USER_V::user_menu(); // shows sign in/out form ???
     }
 
 }
