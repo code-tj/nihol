@@ -4,14 +4,14 @@ class CORE {
 	private static $inst; // instance for singleton
 
     private $msg_arr=array('error'=>'','info'=>'','debug'=>'');
-    // modules: =>0 - core; =>1 - app;
+    // modules: 0 - core; 1 - app;
     private $modules=array('user'=>0,'page'=>0);
-
     public $dbcon=false;
-
+    // language parameters
     public $lang='en';
-		public $langfile=false;
-		public $lng=array();
+    public $langs=array('en'=>'English','ru'=>'Русский','tj'=>'Тоҷикӣ');
+	public $langfile=false;
+	public $lng=array();
 
     private function __construct() {
         spl_autoload_register('CORE::AutoLoader');
@@ -21,11 +21,21 @@ class CORE {
         if(empty(self::$inst)) {
             self::$inst = new self();
             // additional
-            CORE::CheckMode(N_MODE);
+            CORE::check_mode();
+            CORE::msg('debug','core initialization');
             SESSION::init();
-            CORE::CheckLang();
+            CORE::check_lang();
         }
         return self::$inst; // singleton pattern
+    }
+
+    public static function check_mode() {
+        switch(N_MODE){
+            case 1: // Maintenance mode
+                echo 'Maintenance... We\'ll be back soon.';
+                exit;
+            break;
+        }
     }
 
     public static function AutoLoader($class) {
@@ -45,8 +55,12 @@ class CORE {
                     //CORE::msg('debug','Required path: '.$path);
                 }
         } else {
-            CORE::msg('debug','Not valid class required: '.$class);
+            CORE::msg('debug','Not valid class name required: '.$class);
         }
+    }
+
+    public static function isValid($str,$regex='/^[a-zA-Z0-9_]+$/'){
+        if(preg_match($regex,$str)){ return true; } else {return false;}
     }
 
     public static function msg($type='debug',$msg='') {
@@ -60,75 +74,41 @@ class CORE {
 
     public static function get_msg_arr(){ return CORE::init()->msg_arr; }
 
-    public static function CheckLang(){
-        $langs=array('en'=>'English');
-        if(isset($GLOBALS['langs'])) $langs=$GLOBALS['langs'];
-        reset($langs);
-        CORE::init()->lang=key($langs);
-        // set current language
-        $ln=SESSION::get('lang');
-        if($ln!=''){
-            if(in_array($ln,$langs)){
-                CORE::init()->lang=$ln;
-            }
+    public static function check_lang(){
+        global $conf;
+        if(isset($conf['lang'])){
+            $langs=CORE::init()->langs;
+            // set language
+            $ln=SESSION::get('lang');
+            if(isset($_GET['lang'])){ $ln=trim($_GET['lang']); }
+            if(isset($langs[$ln])) { CORE::init()->lang=$ln; } else {CORE::init()->lang=$conf['lang'];}
+            CORE::msg('debug','language: '.CORE::init()->lang);
         }
-        if(isset($_GET['lang'])){
-            $ln=trim($_GET['lang']);
-            if(isset($langs[$ln])){
-                CORE::init()->lang=$ln;
-                SESSION::set('lang',CORE::init()->lang); // or use cookies
-            }
-        }
-        CORE::msg('debug','language: '.CORE::init()->lang);
     }
 
-
-    
-
-		public static function lang($alias,$dval=''){
-			$lang=CORE::init()->lang;
-			if(!CORE::init()->langfile){
-				if(is_readable(DIR_CORE.'/lng/'.$lang.'.php')){
-					include(DIR_CORE.'/lng/'.$lang.'.php');
-					CORE::init()->lng=$lng;
-					CORE::init()->langfile=true;
-					CORE::msg('debug','language file loaded');
-				}
-			}
-			if(isset(CORE::init()->lng[$alias])){
-				return CORE::init()->lng[$alias];
-			} else {
-				return $dval;
-			}
+	public static function lang($alias,$default=''){
+		$lang=CORE::init()->lang;
+		if(!CORE::init()->langfile){
+			if(is_readable(DIR_CORE.'/lang/'.$lang.'.php')){
+				include(DIR_CORE.'/lang/'.$lang.'.php');
+				CORE::init()->lng=$lng;
+				CORE::init()->langfile=true;
+				//CORE::msg('debug','core language file loaded');
+			} else { CORE::msg('debug','core language file not loaded'); }
 		}
-
-    public static function CheckMode($mode=0) {
-    	switch($mode){
-			case 1: // Maintenance mode
-				echo 'Maintenance... We\'ll be back soon.';
-				exit;
-			break;
+		if(isset(CORE::init()->lng[$alias])){
+			return CORE::init()->lng[$alias];
+		} else {
+			return $default;
 		}
-    }
+	}
 
-    
-
-    public static function isValid($str,$regex='/^[a-zA-Z0-9_]+$/'){
-        if(preg_match($regex,$str)){ return true; } else {return false;}
-    }
-
-    
-
-    
-
-    public function get_modules(){
-        return $this->modules;
-    }
+    public function get_modules(){ return $this->modules; }
 
     public function includes(){
         $inc=get_included_files();
         if(count($inc)>1){
-            $this::msg('debug','Included:');
+            $this::msg('debug','included:');
             foreach ($inc as $key => $val) {
                 $this::msg('debug',($key+1). ') '.$val);
             }
@@ -151,28 +131,16 @@ public static function init($mode=0){
   if($mode==1){
     SESSION::start();
   } else {
+    // if(isset($_COOKIE[PREFX.'st'])){SESSION::start();}
     if(isset($_COOKIE['PHPSESSID'])){SESSION::start();}
   }
 }
     public static function start(){
         if(session_id()==''){
         session_start();
-        CORE::msg('debug','starting session'); //session_id()
-        // session_id(uniqid());
-        // \CORE::msg('debug',session_save_path());
-        // session_id()
-        // $_COOKIE["PHPSESSID"]
-        // session_save_path(), sys_get_temp_dir()
-        // session_destroy();
-        // unset($_COOKIE['PHPSESSID']);
-        // setcookie("PHPSESSID", "", 1);
-
-        // or this would remove all the variables in the session, but not the session itself
-        // session_unset();
-
-        // this would destroy the session variables
-        // session_destroy();
-
+        // CORE::msg('debug','starting session: '.session_id());
+        CORE::msg('debug','starting session');
+        // uniqid(),session_save_path(),sys_get_temp_dir(),session_id()
         }
     }
     public static function get($key=""){
@@ -213,10 +181,6 @@ public static function init($mode=0){
 
 class SEC {
     private static $inst;
-
-    private function __construct() {
-
-    }
 
     public static function init() {
         if(empty(self::$inst)) {

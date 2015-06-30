@@ -1,6 +1,12 @@
 <?php
 if(!defined('DIR_BASE')){echo '[+_+]'; exit;}
-if(is_readable(DIR_CORE.'/bc/core.php')) {require(DIR_CORE.'/bc/core.php');} else {echo 'Core not found'; exit;}
+
+if(is_readable(DIR_CORE.'/bc/core.php')) {
+	require(DIR_CORE.'/bc/core.php');
+} else {
+	echo 'Core class not found';
+	exit;
+}
 
 $CORE=CORE::init();
 $USER=\CORE\BC\USER::init();

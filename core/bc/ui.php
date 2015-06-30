@@ -21,6 +21,7 @@ class UI {
     public static function init() {
         if(empty(self::$inst)) {
             self::$inst = new self();
+            \CORE::init()->msg('debug','ui initialization');
         }
         return self::$inst;
     }

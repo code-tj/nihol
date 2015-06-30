@@ -7,6 +7,7 @@ class REQUEST {
 	private $act='';
 
     public function __construct() {
+        \CORE::msg('debug','app initialization');
     	if(isset($_GET['c'])){
     		$c=trim($_GET['c']);
     		if(\CORE::isValid($c,'/^[a-z]+$/')){

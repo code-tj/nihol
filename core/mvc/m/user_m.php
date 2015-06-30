@@ -27,10 +27,9 @@ $password=trim($password);
 
 							if($r['usr-status']>0){
 								$r=$sth->fetch();
-								// additional checking via profile data
-								// !!! check $cend and current date & $status
-								\SESSION::start(); //???
-								// here may be some additional records, like when login, which ip e.t.c.
+								// here will be additional checking via profile data, if needed
+								\SESSION::start();
+								// here may be some additional records, like when login, which ip, etc
 								$uid=(int) $r['usr-uid'];
 								$gid=(int) $r['usr-gid'];
 								\SESSION::set('uid',$uid);
@@ -40,11 +39,10 @@ $password=trim($password);
 									$pid=(int) $r['usr-pid'];
 									\SESSION::set('pid',$pid);
 								}
-								//$time=86400; // 24 hours
+								// setcookie(PREFX.'st',1,time()+3600); // 1 hour
 								if(isset($_POST['cookie'])){
-									//global $conf; // in future we need to create some special method in CORE class for cookies
-									//setcookie(PREFIX."ul", base64_encode($login), time()+$time, "/");
-									//////// setcookie(PREFIX."up", base64_encode($user_pass), time()+$time, "/");
+									//// $time=86400; // 24 hours
+									//// setcookie(PREFIX."ul", base64_encode($login), time()+$time, "/");
 								}
 								$sth = $DB->dbh->prepare("UPDATE `n-users` SET `usr-lastlogin`=CURRENT_TIMESTAMP() WHERE `usr-uid`=?;");
 								$sth->execute(array($uid));
@@ -66,13 +64,10 @@ $password=trim($password);
 
 public function logout(){
 	if(\SESSION::get('uid')!=''){
-		// \CORE::msg('debug','Logout');
-		//$this->uid=-1; // ???? USER::init()
-		//setcookie(PREFIX."ul", '', 0, "/");
-		//setcookie(PREFIX."up", '', 0, "/");
-		//session_unset();
-		//session_destroy();
+		// session_destroy();
+        // session_unset();
 		\SESSION::remove_all(); // only for this app
+		// setcookie(PREFX.'st',0,1);
 		header("Location: ./"); // here we can put session message like "you logged out"
 		exit;
 	} else {
