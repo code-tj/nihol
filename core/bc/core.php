@@ -8,7 +8,7 @@ class CORE {
     private $modules=array('user'=>0,'page'=>0);
     public $dbcon=false;
     // language parameters
-    public $lang='en';
+    public $lang='';
     public $langs=array('en'=>'English','ru'=>'Русский','tj'=>'Тоҷикӣ');
 	public $langfile=false;
 	public $lng=array();
@@ -76,31 +76,39 @@ class CORE {
     public static function check_lang(){
         global $conf;
         if(isset($conf['lang'])){
+            $lang=$conf['lang'];
             $langs=CORE::init()->langs;
-            // set language
-            $ln=SESSION::get('lang');
-            if(isset($_GET['lang'])){ $ln=trim($_GET['lang']); }
-            if(isset($langs[$ln])) { CORE::init()->lang=$ln; } else {CORE::init()->lang=$conf['lang'];}
+            $ln=COOKIE::get('lang');
+            if($ln!='') $lang=$ln;
+            if(isset($_GET['lang'])){
+                $ln=trim($_GET['lang']);
+                if(isset($langs[$ln])) {
+                    COOKIE::set('lang',$ln);
+                    $lang=$ln;
+                }
+            }
+            if(isset($langs[$lang])) { CORE::init()->lang=$lang; }
             CORE::msg('debug','language: '.CORE::init()->lang);
         }
     }
 
 	public function lang($alias,$default=''){
-		$lang=$this->lang;
-		if(!$this->langfile){
-			if(is_readable(DIR_CORE.'/lang/'.$lang.'.php')){
-				include(DIR_CORE.'/lang/'.$lang.'.php');
-				$this->lng=$lng;
-				$this->langfile=true;
-				//CORE::msg('debug','core language file loaded');
-			} else { CORE::msg('debug','core language file is not loaded'); }
-		}
-        //CORE::msg('debug','lng: '.$alias);
-		if(isset($this->lng[$alias])){
-			return $this->lng[$alias];
-		} else {
-			return $default;
-		}
+        $result=$default;
+        if($this->lang!=''){
+    		if(!$this->langfile){
+    			if(is_readable(DIR_CORE.'/lang/'.$this->lang.'.php')){
+    				include(DIR_CORE.'/lang/'.$this->lang.'.php');
+    				$this->lng=$lng;
+    				$this->langfile=true;
+    				//CORE::msg('debug','core language file loaded');
+    			} else { CORE::msg('debug','core language file is not loaded'); }
+    		}
+            //CORE::msg('debug','lng: '.$alias);
+    		if(isset($this->lng[$alias])){
+    			$result=$this->lng[$alias];
+    		}
+        }
+        return $result;
 	}
 
     public function get_modules(){ return $this->modules; }
@@ -121,6 +129,30 @@ class CORE {
         if($this->dbcon){DB::init()->close();}
     }
 
+}
+
+class COOKIE {
+    public static function get($key=""){
+      $result='';
+      if(CORE::isValid($key)){
+        if(isset($_COOKIE[PREFX.$key])){$result=$_COOKIE[PREFX.$key];}
+      }
+      return $result;
+    }
+    public static function set($key,$val,$time=0){
+      if(CORE::isValid($key)){
+        if($time==0) {$time=time()+86400;} // 1 day
+        setcookie(PREFX.$key,$val,$time);
+      }
+    }
+    public static function remove($key){
+      if(CORE::isValid($key)){
+        if(isset($_COOKIE[PREFX.$key])) {
+            unset($_COOKIE[PREFX.$key]);
+            setcookie($_COOKIE[PREFX.$key],null,-1);
+        }
+      }
+    }
 }
 
 class SESSION {
