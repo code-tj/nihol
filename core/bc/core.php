@@ -112,6 +112,13 @@ class CORE {
 	}
 
     public function get_modules(){ return $this->modules; }
+    public function set_modules($new_modules){
+        foreach($new_modules as $key => $value){
+            if(!isset($this->modules[$key])){
+                $this->modules[$key]=$value;
+            }
+        }
+    }
 
     public function includes(){
         $inc=get_included_files();
@@ -214,6 +221,7 @@ class SEC {
     }
 
     public function acl($c='',$act=''){
+        // ! this method is not completed !
         $result=false;
         $name=$c.','.$act;
         \CORE::msg('debug','Checking acl: '.$name);

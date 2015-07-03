@@ -90,14 +90,15 @@ class APP {
             } else {
                 \CORE::init()->msg('debug','application main script not found');
             }
+            $modules=\CORE::init()->get_modules();
+            $REQUEST = new REQUEST();
+            ROUTER::init($REQUEST,$modules); // check modules
         }
         return self::$inst;
     }
 
     private function __construct() {
-    	$modules=\CORE::init()->get_modules();
-    	$REQUEST = new REQUEST();
-        ROUTER::init($REQUEST,$modules); // check modules
+
     }
 
 }

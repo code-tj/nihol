@@ -13,8 +13,15 @@ public function profile($model){
 
 public function manage_users($model){
 	if($model!=null){
-		//\CORE::init()->msg('debug','Managing users accounts');
-
+		$UI=\CORE\BC\UI::init();
+		$UI->pos['main'].='
+		<div class="panel panel-default">
+		  <div class="panel-heading">Manage users</div>
+		  <div class="panel-body">
+		    content ...
+		  </div>
+		</div>
+		';
 	}
 }
 
