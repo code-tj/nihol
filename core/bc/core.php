@@ -222,6 +222,7 @@ class SEC {
         $gid=$USER->get('gid');
         //dafault acl settings
             $group_acl[',']=1;
+            $group_acl['page,ciscocall']=1;
             if($gid==0) {$group_acl['user,login']=1;} else {
                 $group_acl['user,logout']=1;
                 $group_acl['user,profile']=1;

@@ -13,10 +13,12 @@ class UI {
         'js'=>'',
         'mainmenu'=>'',
         'user1'=>'',
-        'user2'=>'',
         'main'=>'',
         );
-    private $pages=array('home'=>'home');
+    private $pages=array(
+        'home'=>'home',
+        'ciscocall'=>'ciscocall'
+        );
 
     public static function init() {
         if(empty(self::$inst)) {
@@ -88,12 +90,11 @@ class UI {
 
     public function static_page($alias=''){
         if(isset($this->pages[$alias])){
-            $path=DIR_APP.'/pages/'.$this->pages[$alias].'.php';
+            if(\CORE::init()->lang!='') {$lang='_'.\CORE::init()->lang;} else {$lang='';}
+            $path=DIR_APP.'/pages/'.$this->pages[$alias].$lang.'.php';
             if(is_readable($path)){
-                if(true){ // \SEC::init()->acl('page',$alias)
-                    include($path);
-                    // \CORE::msg('debug','include page: '.$this->pages[$alias]);
-                }
+                include($path);
+                // \CORE::msg('debug','include page: '.$this->pages[$alias]);
             } else {
                 \CORE::msg('error','Page is not found');
             }

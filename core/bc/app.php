@@ -7,7 +7,6 @@ class REQUEST {
 	private $act='';
 
     public function __construct() {
-        \CORE::msg('debug','app initialization');
     	if(isset($_GET['c'])){
     		$c=trim($_GET['c']);
     		if(\CORE::isValid($c,'/^[a-z]+$/')){
@@ -85,8 +84,11 @@ class APP {
     public static function init() {
         if(empty(self::$inst)) {
             self::$inst = new self();
-            if(is_readable(DIR_APP.'/main.php')){
-                include(DIR_APP.'/main.php'); // init
+            \CORE::msg('debug','app initialization');
+            if(is_readable(DIR_APP.'/appmain.php')){
+                include(DIR_APP.'/appmain.php');
+            } else {
+                \CORE::init()->msg('debug','application main script not found');
             }
         }
         return self::$inst;
@@ -96,7 +98,6 @@ class APP {
     	$modules=\CORE::init()->get_modules();
     	$REQUEST = new REQUEST();
         ROUTER::init($REQUEST,$modules); // check modules
-        \CORE\MVC\V\USER_V::user_menu(); // shows sign in/out form ???
     }
 
 }
