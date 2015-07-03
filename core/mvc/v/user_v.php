@@ -23,10 +23,11 @@ public function manage_groups($model){
 		$UI=\CORE\BC\UI::init();
 		$groups=$model->get_groups();
 		$count=count($groups);
+		// test
 		$UI->pos['main'].='<div class="btn-group" role="group" aria-label="...">
-  <button id="new_group" type="button" class="btn btn-default"
-  data-toggle="modal" data-target="#myModal">New</button>
-</div>'.$UI::modal();
+		  <button id="new_group" type="button" class="btn btn-default"
+		  data-toggle="modal" data-target="#myModal">New</button>
+		</div>'.$UI::modal();
 		if($count>0){
 			//... show table
 		} else {
