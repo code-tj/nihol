@@ -9,7 +9,7 @@ $password=trim($password);
 	if($login!='' && $password!=''){
 		if($this->CheckLogin($login) && $this->CheckPassword($password)){
 			$DB=\DB::init();
-			if($DB->connected()){
+			if($DB->connect()){
 				$sth = $DB->dbh->prepare("SELECT * FROM `n-users` WHERE LOWER(`usr-login`) = LOWER(?) LIMIT 1;");
 				\CORE::msg('debug','User login check');
 				$sth->bindParam(1, $login, \PDO::PARAM_STR);
@@ -88,17 +88,80 @@ public function CheckPassword($password){
 public function get_groups(){
 	$groups=array();
 	$DB=\DB::init();
-	if($DB->connected()){
+	if($DB->connect()){
 		$sql="SELECT * FROM `n-groups` ORDER BY `gp-sort`;";
 		$sth=$DB->dbh->prepare($sql);
 		$sth->execute();
+		$DB->query_count();
 		if($sth->rowCount()>0){
 			while($r=$sth->fetch()){
-				$groups[$r['gp-gid']]=$r['gp-group'];
+				$groups[$r['gp-gid']]=array('groupname'=>$r['gp-group']);
 			}
 		}
 	}
 	return $groups;
+}
+
+public function get_users(){
+	$users=array();
+	$DB=\DB::init();
+	if($DB->connect()){
+		$sql="SELECT * FROM `n-users` 
+		LEFT OUTER JOIN `n-groups` ON `usr-gid`=`gp-gid`
+		ORDER BY `usr-login`;";
+		$sth=$DB->dbh->prepare($sql);
+		$sth->execute();
+		$DB->query_count();
+		if($sth->rowCount()>0){
+			$statuses=array('0'=>'disabled','1'=>'active');
+			while($r=$sth->fetch()){
+					$created=$r['usr-created'];
+					$lastlogin=$r['usr-lastlogin'];
+					$status='';
+					if($created!='') $created=date('H:i:s, d.m.Y',strtotime($created));
+					if($lastlogin!='') $lastlogin=date('H:i:s, d.m.Y',strtotime($lastlogin));
+					if(isset($statuses[$r['usr-status']])) $status=$statuses[$r['usr-status']];
+				$users[$r['usr-uid']]=array(
+					'username'=>$r['usr-login'],
+					'gid'=>$r['gp-group'],
+					'pid'=>$r['usr-pid'],
+					'status'=>$status,
+					'created'=>$created,
+					'lastlogin'=>$lastlogin
+					);
+			}
+		}
+	}
+	return $users;
+}
+
+public function add_group($group_name=''){
+	$group_name=trim($group_name);
+	if($group_name!=''){
+		$DB=\DB::init();
+		if($DB->connect()){
+			if($DB->isUnique('n-groups','gp-group',$group_name)){
+				$sql = "INSERT INTO `n-groups` SET `gp-group`=:groupname;";
+				$sth = $DB->dbh->prepare($sql);
+				$sth->execute(array('groupname'=>$group_name));
+				$DB->query_count();
+				\CORE::msg('info','Group successfully added.');
+			}
+		}
+	} else {
+		\CORE::msg('error','Group name could not be empty.');
+	}
+}
+
+public function del_group($gid=0){
+	$DB=\DB::init();
+		if($DB->connect()){
+			if($DB->del('n-groups','gp-gid',$gid)){
+				\CORE::msg('info','Group successfully deleted.');
+			} else {
+				\CORE::msg('error','Group was not deleted.');
+			}
+		}
 }
 
 }

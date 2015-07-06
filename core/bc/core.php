@@ -64,7 +64,11 @@ class CORE {
 
     public static function msg($type='debug',$msg='') {
         if($msg!=''){
-            if($type=='debug' && N_DEBUG==0) { return; }
+            if($type=='debug') {
+                if(N_DEBUG==0) { return; } else { if(isset($_GET['ajax'])){ return; } }
+            } else {
+                if(isset($_GET['ajax'])) { echo $msg; return; }
+            }            
             if(isset(CORE::init()->msg_arr[$type])){
                 CORE::init()->msg_arr[$type].=htmlspecialchars($msg)."<br>\n";
             }
@@ -276,35 +280,34 @@ public static function init() {
     return self::$inst;
 }
 
-private function __construct() {
-    $this->connect();
-}
+public function connect(){
+    if(!$this->connected){
+        global $conf;
+        try {
+            $dsn='mysql:host='.$conf['db_server'].';dbname='.$conf['db_name'];
+            // .';charset='.$conf['db_charset']
 
-private function connect(){
-    global $conf;
-    try {
-        $dsn='mysql:host='.$conf['db_server'].';dbname='.$conf['db_name'];
-        // .';charset='.$conf['db_charset']
-
-        // PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8',
-        $opt=array(
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-        );
-        $this->dbh = new PDO($dsn,$conf['db_user'],$conf['db_pass'],$opt);
-        ///$this->dbh->query('SET character_set_connection = '.$conf['db_charset'].';');
-        ///$this->dbh->query('SET character_set_client = '.$conf['db_charset'].';');
-        ///$this->dbh->query('SET character_set_results = '.$conf['db_charset'].';');
-        $this->dbh->query('SET NAMES '.$conf['db_charset']);
-        $this->connected=true;
-        CORE::init()->dbcon=true;
-        CORE::msg('debug','Connecting to database');
-    } catch(PDOException $e) {
-        CORE::msg('error','Some problems with db connection (check configuration)');
-        CORE::msg('debug',$e->getMessage());
+            // PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8',
+            $opt=array(
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+            );
+            $this->dbh = new PDO($dsn,$conf['db_user'],$conf['db_pass'],$opt);
+            ///$this->dbh->query('SET character_set_connection = '.$conf['db_charset'].';');
+            ///$this->dbh->query('SET character_set_client = '.$conf['db_charset'].';');
+            ///$this->dbh->query('SET character_set_results = '.$conf['db_charset'].';');
+            $this->dbh->query('SET NAMES '.$conf['db_charset']);
+            $this->connected=true;
+            CORE::init()->dbcon=true;
+            CORE::msg('debug','Connecting to database');
+        } catch(PDOException $e) {
+            CORE::msg('error','Some problems with db connection (check configuration)');
+            CORE::msg('debug',$e->getMessage());
+        }
+        // after initializing DB cleaning db configuration parameters ( sec. reasons =)
+        $conf['db_server']=''; $conf['db_name']=''; $conf['db_user']=''; $conf['db_pass']='';
     }
-    // after initializing DB cleaning db configuration parameters ( sec. reasons =)
-    $conf['db_server']=''; $conf['db_name']=''; $conf['db_user']=''; $conf['db_pass']='';
+    return $this->connected;
 }
 
 public function connected(){ return $this->connected; }
@@ -312,12 +315,42 @@ public function connected(){ return $this->connected; }
 public function query_count($q=0){ if($q==0){$this->queries++;} else {$this->queries+=(int) $q;} }
 
 public function close(){
-    if($this->dbh!=null){
+    if($this->dbh!=null && $this->connected){
         $this->dbh=null;
         $this->connected=false;
         CORE::init()->dbcon=false;
         CORE::msg('debug','Closing db connection (queries: '.$this->queries.')');
     }
+}
+
+public function isUnique($tbl='',$fld='',$val='',$err_msg='This entry already exists in the database.'){
+    $unique=true;
+    if($this->dbh!=null){
+        $sql = "SELECT * FROM `".$tbl."` WHERE `".$fld."`=:val;";
+        $sth = $this->dbh->prepare($sql);
+        $sth->execute(array('val'=>$val));
+        if($sth->rowCount()>0){
+            $unique=false;
+            CORE::msg('error',$err_msg);
+        }
+    }
+    return $unique;
+}
+
+public function del($tbl='',$fld='',$id=0){
+    $deleted=false;
+        $id=(int) $id;
+        if($id>0){
+            $DB=\DB::init();
+            if($DB->connect()){
+                $sql = "DELETE FROM `".$tbl."` WHERE `".$fld."`=:id;";
+                $sth = $DB->dbh->prepare($sql);
+                $sth->execute(array('id'=>$id));
+                $DB->query_count();
+                $deleted=true;
+            }
+        }
+    return $deleted;
 }
 
 }

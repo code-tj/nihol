@@ -103,28 +103,38 @@ class UI {
         }
     }
 
-    public static function modal($id='xModal',$btn=''){
+    public static function bootstrap_modal_btn($id='show_myModal',$target='myModal',$text='ShowModal'){
+        $result='<button id="'.$id.'" type="button" class="btn btn-success btn-xs"
+        data-toggle="modal" data-target="#'.$target.'">'.$text.'</button>
+        ';
+        return $result;
+    }
+
+    public static function bootstrap_modal($id='myModal',$title='Modal title',$frm='',$body='...',$btn_id='defaultAction',$btn_txt='Save changes'){
         $result='
-    <!-- Modal -->
-    <div class="modal fade" id="'.$id.'" tabindex="-1" role="dialog" aria-labelledby="'.$id.'Label" aria-hidden="true">
+    <!-- Modal -> '.$id.' -->
+    <div class="modal fade" id="'.$id.'" tabindex="-1" role="dialog" 
+    aria-labelledby="'.$id.'Label" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
+        <form'.$frm.'>
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title" id="'.$id.'Label">Modal title</h4>
+            <h4 class="modal-title" id="'.$id.'Label">'.$title.'</h4>
           </div>
           <div id="'.$id.'Body" class="modal-body">
-            ...
+            '.$body.'
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary">Save changes</button>
+            <input type="submit" id="'.$btn_id.'" class="btn btn-primary" value="'.$btn_txt.'">
           </div>
+          </form>
         </div>
       </div>
     </div>
-    <!-- /Modal -->
+    <!-- /Modal -> '.$id.' -->
     ';
         return $result;
     }
