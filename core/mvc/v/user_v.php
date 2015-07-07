@@ -74,49 +74,58 @@ public function manage_groups($model){
 		$groups_count=count($groups);
 		$UI=\CORE\BC\UI::init();
 		$UI->pos['main'].='
-<div>
-	<h4>Groups: <span class="badge">'.$groups_count.'</span>&nbsp;
-	'.$UI::bootstrap_modal_btn('show_newGroupForm','newGroupForm','New group').'
-	</h4>
-</div>
-		';
-		$modal_body='
-		<div class="form-group">
-		<label for="groupname">Group name</label>
-		<input type="text" class="form-control" id="groupname" placeholder="">
+		<div>
+			<h4>Groups: <span class="badge">'.$groups_count.'</span>&nbsp;
+			'.$UI::bootstrap_modal_btn('show_newGroupForm','NewGroup','New group').'
+			</h4>
 		</div>
 		';
-		$UI->pos['main'].=$UI::bootstrap_modal('newGroupForm','New group',' id="frm_newGroup"',$modal_body,'addGroup','Add');
+		$modal_body1='
+		<div class="form-group">
+		<label for="newgroup">Group name</label>
+		<input type="text" class="form-control" id="newgroup" placeholder="">
+		</div>
+		';
+		$modal_body2='
+		<div class="form-group">
+		<label for="editgroup">Group name
+		<input type="hidden" id="ugid" value="0">
+		</label>
+		<input type="text" class="form-control" id="editgroup" placeholder="">
+		</div>
+		';
+		$UI->pos['main'].=$UI::bootstrap_modal('NewGroup','New group',' id="frm_NewGroup"',$modal_body1,'addGroup','Add');
+		$UI->pos['main'].=$UI::bootstrap_modal('EditGroup','Edit group',' id="frm_EditGroup"',$modal_body2,'updateGroup','Update');
 		if($groups_count>0){
 			$UI->pos['main'].='
-<table class="table table-bordered table-hover" style="width:auto;">
-<thead>
-<tr>
-	<th>#</th>
-	<th>GROUP</th>
-	<th class="text-center">ACTION</th>
-</tr>
-</thead>
-<tbody>
-';
-			$cnt=0;
+		<table class="table table-bordered table-hover" style="width:auto;">
+		<thead>
+		<tr>
+			<th>#</th>
+			<th>GROUP</th>
+			<th class="text-center">ACTION</th>
+		</tr>
+		</thead>
+		<tbody>
+		';
+		$cnt=0;
 		foreach ($groups as $gid => $group) {
 			$cnt++;
 			$UI->pos['main'].='
-<tr>
-<td>'.$cnt.'</td>
-<td>'.$group['groupname'].'</td>
-<td>
-<div id="'.$gid.'" class="btn-group btn-group-xs">
-	<button type="button" class="btn btn-default edit">edit</button>
-	<button type="button" class="btn btn-default delete">delete</button>
-</div>
-</td>
-</tr>
-';
+		<tr>
+		<td>'.$cnt.'</td>
+		<td>'.$group['groupname'].'</td>
+		<td>
+		<div id="'.$gid.'" class="btn-group btn-group-xs">
+			<button type="button" class="btn btn-default edit" data-toggle="modal" data-target="#EditGroup">edit</button>
+			<button type="button" class="btn btn-default delete">delete</button>
+		</div>
+		</td>
+		</tr>
+		';
 		}
 		$UI->pos['main'].='</tbody>
-</table>';
+		</table>';
 		} else {
 			$UI->pos['main'].='
 			<div class="well">'.\CORE::init()->lang('norecdb','No records found in the database').'</div>
@@ -125,15 +134,18 @@ public function manage_groups($model){
 	}
 $UI->pos['js'].='<!-- groups js -->
 <script type="text/javascript">
-	$("#newGroupForm").on("shown.bs.modal", function() {
-	    $("#groupname").focus();
+
+	/* ADD */
+
+	$("#NewGroup").on("shown.bs.modal", function() {
+	    $("#newgroup").focus();
 	});
-	$("#frm_newGroup").submit(function(e){
+	$("#frm_NewGroup").submit(function(e){
 		e.preventDefault();
 	});
 	$("#addGroup").click(function(){
-		var xgroupname = $("#groupname").val();
-		$.post("./?c=user&act=groups&ajax=add", {groupname:xgroupname}, function(data){
+		var xnewgroup = $("#newgroup").val();
+		$.post("./?c=user&act=groups&ajax=add", {newgroup:xnewgroup}, function(data){
 			if(data=="Group successfully added."){
 				location.reload();
 			} else {
@@ -142,6 +154,51 @@ $UI->pos['js'].='<!-- groups js -->
 			}
 		});
 	});
+
+	/* EDIT */
+
+	function IsJsonString(str) {
+	    try {
+	        JSON.parse(str);
+	    } catch (e) {
+	        return false;
+	    }
+	    return true;
+	}
+	$("#EditGroup").on("shown.bs.modal", function() {
+	    $("#editgroup").focus();
+	});
+	$("#frm_EditGroup").submit(function(e){
+		e.preventDefault();
+	});
+	$("button.edit").click(function(){
+		var xgid = $(this).parent("div").attr("id");
+		$.post("./?c=user&act=groups&ajax=edit", {gid:xgid}, function(data){
+			if(IsJsonString(data)){
+				var obj = JSON.parse(data);
+				$("#editgroup").val(obj.group);
+				$("#ugid").val(xgid);
+			} else {
+				alert("Error. Check JS console log.");
+				console.log(data);
+			}
+		});
+	});
+	$("#updateGroup").click(function(){
+		var xugid = $("#ugid").val();
+		var xeditgroup = $("#editgroup").val();
+		$.post("./?c=user&act=groups&ajax=update", {gid:xugid,editgroup:xeditgroup}, function(data){
+			if(data=="Group successfully updated."){
+				location.reload();
+			} else {
+				alert("The operation failed. Check JS console log.");
+				console.log(data);
+			}
+		});
+	});
+
+	/* DELETE */
+
 	$("button.delete").click(function(){
 		var xgid = $(this).parent("div").attr("id");
 		if(confirm("Delete this group?")){
@@ -155,6 +212,7 @@ $UI->pos['js'].='<!-- groups js -->
 			});
 		}
 	});
+
 </script>';
 }
 

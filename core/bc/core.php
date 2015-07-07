@@ -116,9 +116,9 @@ class CORE {
 	}
 
     public function get_modules(){ return $this->modules; }
-    public function set_modules($new_modules){
+    public function set_modules($new_modules,$redefine=false){
         foreach($new_modules as $key => $value){
-            if(!isset($this->modules[$key])){
+            if(!isset($this->modules[$key]) || $redefine){
                 $this->modules[$key]=$value;
             }
         }

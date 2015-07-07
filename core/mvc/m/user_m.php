@@ -153,6 +153,44 @@ public function add_group($group_name=''){
 	}
 }
 
+public function edit_group($gid=0){
+	$gid=(int) $gid;
+	if($gid>0){
+		$DB=\DB::init();
+		if($DB->connect()){
+			$sql = "SELECT * FROM `n-groups` WHERE `gp-gid`=:id;";
+			$sth = $DB->dbh->prepare($sql);
+			$sth->execute(array('id'=>$gid));
+			$DB->query_count();
+			if($sth->rowCount()==1){
+				$r=$sth->fetch();
+				echo json_encode(array('group'=>htmlspecialchars($r['gp-group'])));
+			}
+		}
+	} else {
+		\CORE::msg('error','Incorrect group ID.');
+	}
+}
+
+public function update_group($gid=0,$group=''){
+	$gid=(int) $gid;
+	$group=trim($group);
+	if($gid>0 && $group!=''){
+		$DB=\DB::init();
+		if($DB->connect()){
+			if($DB->isUnique('n-groups','gp-group',$group)){
+				$sql = "UPDATE `n-groups` SET `gp-group`=:group WHERE `gp-gid`=:gid;";
+				$sth = $DB->dbh->prepare($sql);
+				$sth->execute(array('group'=>$group,'gid'=>$gid));
+				$DB->query_count();
+				\CORE::msg('info','Group successfully updated.');
+			}
+		}
+	} else {
+		\CORE::msg('error','Incorrect group data.');
+	}
+}
+
 public function del_group($gid=0){
 	$DB=\DB::init();
 		if($DB->connect()){
