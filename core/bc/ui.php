@@ -139,4 +139,25 @@ class UI {
         return $result;
     }
 
+    public static function html_list($ls=array(),$key='',$attr=' id="select"',$sel=0,$zero=''){
+        $list=''; $s='';
+            if(count($ls)>0){
+                $list.="<select".$attr.">\n";
+                if($zero!='') {$list.='<option value="0">'.$zero."</option>\n";}
+                if($key==''){
+                    foreach ($ls as $k => $val) {
+                        if($sel==$k){$s=' selected="selected"';} else {$s='';}
+                        $list.='<option value="'.$k.'"'.$s.'>'.htmlspecialchars($val)."</option>\n";
+                    }
+                } else {
+                    foreach ($ls as $k => $val) {
+                        if($sel==$k){$s=' selected="selected"';} else {$s='';}
+                        $list.='<option value="'.$k.'"'.$s.'>'.htmlspecialchars($val[$key])."</option>\n";
+                    }
+                }
+                $list.="</select>\n";
+            }
+        return $list;
+    }
+
 }

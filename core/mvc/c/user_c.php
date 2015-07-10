@@ -24,6 +24,30 @@ public function __construct($REQUEST,$model,$view){
 			$view->profile($model);
 		break;
 		case 'manage':
+			if(isset($_GET['ajax'])){
+				switch ($_GET['ajax']) {
+					case 'add':
+						$model->add_user();
+					break;
+					case 'edit':
+						if(isset($_POST['uid'])){
+							$model->edit_user($_POST['uid']);
+						} else {echo 'Error: User ID is not defined.';}
+					break;
+					case 'update':
+						if(isset($_POST['uid'])){
+							$model->update_user($_POST['uid']);
+						} else {echo 'Error: Parameters are not defined.';}
+					break;
+					case 'del':
+						if(isset($_POST['uid'])){
+							$model->del_user($_POST['uid']);
+						} else {echo 'Error: User ID is not defined.';}
+					break;
+				}
+			\DB::init()->close();
+			exit;
+			}
 			$view->manage_users($model);
 		break;
 		case 'groups':
