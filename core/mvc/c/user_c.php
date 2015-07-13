@@ -50,6 +50,20 @@ public function __construct($REQUEST,$model,$view){
 			}
 			$view->manage_users($model);
 		break;
+		case 'change_password':
+			if(isset($_GET['ajax'])){
+				switch ($_GET['ajax']) {
+					case 'passwd':
+						if(isset($_POST['pwd'])){
+							$model->passwd($_POST['pwd']);
+						} else {echo 'Error: pwd parameter is not defined.';}
+					break;
+				}
+			\DB::init()->close();
+			exit;
+			}
+			$view->passwd($model);
+		break;
 		case 'groups':
 			if(isset($_GET['ajax'])){
 				switch ($_GET['ajax']) {

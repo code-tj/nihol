@@ -11,6 +11,66 @@ public function profile($model){
 	}
 }
 
+public function passwd($model){
+	if($model!=null){
+		$UI=\CORE\BC\UI::init();
+		$UI->pos['main'].='
+		<div class="col-md-4">
+			<h4>Change password:</h4>
+			<br>
+			<form id="frm_chpwd">
+			<div class="form-group">
+				<label for="pwd">New password</label>
+				<input type="password" class="form-control" id="pwd" placeholder="password">
+			</div>
+			<div class="form-group">
+				<label for="pwd2">Retype new password</label>
+				<input type="password" class="form-control" id="pwd2" placeholder="password">
+			</div>
+			<div class="form-group">
+				<input type="submit" id="chpwd" class="btn btn-danger" value="Change password">
+			</div>
+			</form>
+		</div>
+		';
+	$UI->pos['js'].='<!-- change pwd js -->
+	<script type="text/javascript">
+
+		function CheckPwd(pwd){
+			var xlen = pwd.length
+			if(xlen>=8 && xlen<255){ return true; } else { return false; }
+		}
+
+		$("#pwd").focus();
+
+		$("#frm_chpwd").submit(function(e){
+			e.preventDefault();
+		});
+
+		$("#chpwd").click(function(){
+			var xpwd = $("#pwd").val();
+			if(CheckPwd(xpwd)){
+				if(xpwd==$("#pwd2").val()){
+					$.post("./?c=user&act=change_password&ajax=passwd", {pwd:xpwd}, function(data){
+						if(data=="Password successfully changed."){
+							alert("Password successfully changed.");
+							window.location.replace("./");
+						} else {
+							alert("Error. Check JS console log.");
+							console.log(data);
+						}
+					});
+				} else {
+					alert("Password does not match the confirm password.");
+				}
+			} else {
+				alert("Password is not valid.");
+			}
+		});
+	</script>';
+	}
+}
+
 public function manage_users($model){
 	if($model!=null){
 		$groups=$model->get_groups();

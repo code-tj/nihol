@@ -13,7 +13,7 @@ class REQUEST {
     			$this->c=$c; // controller
     			if(isset($_GET['act'])){
 		    		$act=trim($_GET['act']);
-		    		if(\CORE::isValid($act,'/^[a-zA-Z0-9]+$/')){
+		    		if(\CORE::isValid($act,'/^[a-zA-Z0-9_]+$/')){
 		    			$this->act=$act; // action	    			
 		    		} else {\CORE::msg('error','Unregistered action');}
 		    	}

@@ -152,7 +152,7 @@ public function auth($full_check=false,$errors=false){
 }
 
 public function passwd($pwd='',$uid=0) {
-	if(CheckPassword($pwd)){
+	if($this->CheckPassword($pwd)){
 		if($uid==0) { $uid=(int) \CORE\BC\USER::init()->get('uid'); }
 		$DB=\DB::init();
 		if($DB->connect()){
@@ -168,9 +168,10 @@ public function passwd($pwd='',$uid=0) {
 			$sth = $DB->dbh->prepare($sql);
 			$sth->execute($pwd);
 			$DB->query_count();
+			\CORE::init()->msg('info','Password successfully changed.');
 		}
 	} else {
-		\CORE::init()->msg('error','Not valid password.');
+		\CORE::init()->msg('error','Password is not valid.');
 	}
 }
 
