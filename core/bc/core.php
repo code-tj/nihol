@@ -5,7 +5,7 @@ class CORE {
 
     private $msg_arr=array('error'=>'','info'=>'','debug'=>'');
     // modules: 0 - core; 1 - app;
-    private $modules=array('user'=>0,'page'=>0);
+    private $modules=array('user'=>0,'acl'=>0,'page'=>0);
     public $dbcon=false;
     // language parameters
     public $lang='';
@@ -226,40 +226,56 @@ class SEC {
 
     public function acl($c='',$act=''){
         // ! this method is not completed !
-        $result=false;
-        $name=$c.','.$act;
-        \CORE::msg('debug','Checking acl: '.$name);
+        \CORE::msg('debug','Checking ACL');
+        $access=false;
+
         $USER=\CORE\BC\USER::init();
-        $uid=$USER->get('uid');
-        $gid=$USER->get('gid');
+        $uid=(int) $USER->get('uid');
+        $gid=(int) $USER->get('gid');
+        $uid=(string) $uid;
+        $gid=(string) $gid;
+
         //dafault acl settings
-            $group_acl[',']=1;
-            $group_acl['page,ciscocall']=1;
-            if($gid==0) {$group_acl['user,login']=1;} else {
-                $group_acl['user,logout']=1;
-                $group_acl['user,profile']=1;
-            }
-            if($gid==1) {$group_acl['*,*']=1;}
-        // loading acl
-            // ...
-        // allow
-            // user
-            if(isset($user_acl[$name])){
-                if($user_acl[$name]==1){
-                    $result=true;
-                }
-            }
-            // group
-            if(isset($group_acl['*,*'])){if($group_acl['*,*']==1){$result=true;}}
-            if(isset($group_acl[$name])){
-                if($group_acl[$name]==1){
-                    $result=true;
-                }
-            }
-        // deny
-            // ...
-        if(!$result) \CORE::msg('error','Access denied');
-        return $result;
+        $acl[0]['']['']['*']=1; // default main page
+        $acl[0]['*']['*']['1']=1; // for administrators
+        $acl[0]['user']['login']['0']=1; // guests can try to login
+        if($gid>0){
+            $acl[0]['user']['logout']['*']=1;
+            $acl[0]['user']['profile']['*']=1;
+        }
+        $acl[0]['page']['ciscocall']['*']=1; // page for all
+
+        // here we can load $acl from db or json...
+
+        // gid
+        $type=0;
+
+        if(isset($acl[$type][$c][$act][$gid])){
+            if($acl[$type][$c][$act][$gid]==1) $access=true;
+        }
+        if(isset($acl[$type][$c][$act]['*'])){
+            if($acl[$type][$c][$act]['*']==1) $access=true;
+        }
+        if(isset($acl[$type]['*']['*'][$gid])){
+            if($acl[$type]['*']['*'][$gid]==1) $access=true;
+        }
+
+        // uid
+        $type=1;
+
+        if(isset($acl[$type][$c][$act][$uid])){
+            if($acl[$type][$c][$act][$uid]==1) $access=true;
+        }
+        if(isset($acl[$type][$c][$act]['*'])){
+            if($acl[$type][$c][$act]['*']==1) $access=true;
+        }
+        if(isset($acl[$type]['*']['*'][$uid])){
+            if($acl[$type]['*']['*'][$uid]==1) $access=true;
+        }
+
+
+        if(!$access) \CORE::msg('error','Access denied.');
+        return $access;
     }
 
 }
