@@ -224,8 +224,60 @@ class SEC {
         return self::$inst;
     }
 
+    public function get_acl_db(){
+        $acl=array();
+        $DB=\DB::init();
+        if($DB->connect()){
+            //$where=" WHERE `acl-c`=:c";
+            $sql="SELECT * FROM `n-acl`;";
+            $sth=$DB->dbh->prepare($sql);
+            $sth->execute();
+            $DB->query_count();
+            if($sth->rowCount()>0){
+                while($r=$sth->fetch()){
+                    $acl[$r['acl-type']]=array(
+                        'c'=>$r['acl-c'],
+                        'act'=>$r['acl-act'],
+                        'xid'=>$r['acl-xid'],
+                        'val'=>$r['acl-val'],
+                        );
+                }
+            }
+        }
+        return $acl;
+    }
+
+    public function get_acl_json($path=''){
+        if($path=='') $path=PATH_APP.'/acl.json';
+        $acl=array();
+        if(is_readable($path)){
+            $json = file_get_contents($path);
+            $acl = json_decode($json,true);
+        }
+        return $acl;
+    }
+
+    public function check_acl($acl,$type,$c,$act,$id){
+        $a=false;
+        //\CORE::msg('debug','type:'.$type.';c:'.$c.';act:'.$act.';id:'.$id.';');
+        if(isset($acl[$type][$c][$act][$id])) {
+            if($acl[$type][$c][$act][$id]==1) $a=true;            
+        } else {
+            if(isset($acl[$type][$c]['*'][$id])) {
+                if($acl[$type][$c]['*'][$id]==1) $a=true;
+            }
+            if(isset($acl[$type]['*']['*'][$id])) {
+                if($acl[$type]['*']['*'][$id]==1) $a=true;
+            }
+            if(isset($acl[$type][$c][$act]['*'])) {
+                if($acl[$type][$c][$act]['*']==1) $a=true;
+            }
+        }
+        return $a;
+    }
+
     public function acl($c='',$act=''){
-        // ! this method is not completed !
+        // I think it needs Refactoring in the future =)
         \CORE::msg('debug','Checking ACL');
         $access=false;
 
@@ -235,7 +287,7 @@ class SEC {
         $uid=(string) $uid;
         $gid=(string) $gid;
 
-        //dafault acl settings
+        // dafault acl settings
         $acl[0]['']['']['*']=1; // default main page
         $acl[0]['*']['*']['1']=1; // for administrators
         $acl[0]['user']['login']['0']=1; // guests can try to login
@@ -245,34 +297,17 @@ class SEC {
         }
         $acl[0]['page']['ciscocall']['*']=1; // page for all
 
-        // here we can load $acl from db or json...
+        // here we can load $acl from db
+            // $act_db=$this->get_acl_db();
+        // or load $acl from json file
+            // $act_json=$this->get_acl_json();
+        //// but for the moment I will use php array ;)
 
-        // gid
-        $type=0;
-
-        if(isset($acl[$type][$c][$act][$gid])){
-            if($acl[$type][$c][$act][$gid]==1) $access=true;
-        }
-        if(isset($acl[$type][$c][$act]['*'])){
-            if($acl[$type][$c][$act]['*']==1) $access=true;
-        }
-        if(isset($acl[$type]['*']['*'][$gid])){
-            if($acl[$type]['*']['*'][$gid]==1) $access=true;
-        }
-
-        // uid
-        $type=1;
-
-        if(isset($acl[$type][$c][$act][$uid])){
-            if($acl[$type][$c][$act][$uid]==1) $access=true;
-        }
-        if(isset($acl[$type][$c][$act]['*'])){
-            if($acl[$type][$c][$act]['*']==1) $access=true;
-        }
-        if(isset($acl[$type]['*']['*'][$uid])){
-            if($acl[$type]['*']['*'][$uid]==1) $access=true;
-        }
-
+        // group gid
+        if($this->check_acl($acl,0,$c,$act,$gid)) $access=true;
+        
+        // user uid
+        if($this->check_acl($acl,1,$c,$act,$uid)) $access=true;
 
         if(!$access) \CORE::msg('error','Access denied.');
         return $access;
