@@ -71,7 +71,7 @@ class CORE {
             if($type=='debug') {
                 if(N_DEBUG==0) { return; } else { if($this->is_ajax()){ return; } }
             } else {
-                if($this->is_ajax()) { echo $msg; return; }
+                if(CORE::init()->is_ajax()) { echo $msg; return; }
             }            
             if(isset(CORE::init()->msg_arr[$type])){
                 CORE::init()->msg_arr[$type].=htmlspecialchars($msg)."<br>\n";
@@ -386,6 +386,7 @@ public function isUnique($tbl='',$fld='',$val='',$err_msg='This entry already ex
         $sql = "SELECT * FROM `".$tbl."` WHERE `".$fld."`=:val;";
         $sth = $this->dbh->prepare($sql);
         $sth->execute(array('val'=>$val));
+        $this->query_count();
         if($sth->rowCount()>0){
             $unique=false;
             CORE::msg('error',$err_msg);

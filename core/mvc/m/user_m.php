@@ -213,10 +213,10 @@ public function get_users(){
 public function add_user($user='',$pwd='',$gid=0,$status=1,$pid=0){
 	$valid=true; $errors='';
 	// user data initialization
-	if($user=='' && $_POST['user']){
+	if($user=='' && isset($_POST['user'])){
 		$user=trim($_POST['user']);
 	}
-	if($pwd=='' && $_POST['password']){
+	if($pwd=='' && isset($_POST['password'])){
 		$pwd=trim($_POST['password']);
 	}
 	if($gid==0 && isset($_POST['gid'])) {
@@ -242,6 +242,7 @@ public function add_user($user='',$pwd='',$gid=0,$status=1,$pid=0){
 			$sql = "SELECT * FROM `n-users` WHERE LOWER(`usr-login`)=LOWER(:user);";
 			$sth = $DB->dbh->prepare($sql);
 			$sth->execute(array('user'=>$user));
+			$DB->query_count();
 			if($sth->rowCount()>0){
 				$valid=false;
 				// \CORE::init()->msg('error','Such user exists in the database.');
@@ -308,10 +309,10 @@ public function edit_user($uid=0){
 public function update_user($uid=0,$gid=0,$user='',$chpwd=0,$pwd='',$status=1,$pid=0){
 	$valid=true; $errors='';
 	// user data initialization
-	if($user=='' && $_POST['user']){
+	if($user=='' && isset($_POST['user'])){
 		$user=trim($_POST['user']);
 	}
-	if($pwd=='' && $_POST['password']){
+	if($pwd=='' && isset($_POST['password'])){
 		$pwd=trim($_POST['password']);
 	}
 	if($uid==0 && isset($_POST['uid'])) {
@@ -345,6 +346,7 @@ public function update_user($uid=0,$gid=0,$user='',$chpwd=0,$pwd='',$status=1,$p
 			$sql = "SELECT * FROM `n-users` WHERE LOWER(`usr-login`)=LOWER(:user) AND `usr-uid`=:uid;";
 			$sth = $DB->dbh->prepare($sql);
 			$sth->execute(array('user'=>$user,'uid'=>$uid));
+			$DB->query_count();
 			if($sth->rowCount()==1){
 				$pwd_array=$this->pwdGen($pwd);
 				$usr=array(

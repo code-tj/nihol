@@ -35,7 +35,7 @@ public function passwd($model){
 		';
 	$UI->pos['js'].='<!-- change pwd js -->
 	<script type="text/javascript">
-
+	$(document).ready(function(){
 		function CheckPwd(pwd){
 			var xlen = pwd.length
 			if(xlen>=8 && xlen<255){ return true; } else { return false; }
@@ -67,6 +67,8 @@ public function passwd($model){
 				alert("Password is not valid.");
 			}
 		});
+
+	});
 	</script>';
 	}
 }
@@ -192,6 +194,7 @@ public function manage_users($model){
 		}
 	$UI->pos['js'].='<!-- users js -->
 	<script type="text/javascript">
+	$(document).ready(function() {
 
 	/* GENERATOR */
 
@@ -327,6 +330,7 @@ public function manage_users($model){
 		}
 	});
 
+	});
 	</script>
 	';
 	}
@@ -398,7 +402,7 @@ public function manage_groups($model){
 	}
 $UI->pos['js'].='<!-- groups js -->
 <script type="text/javascript">
-
+$(document).ready(function(){
 	/* ADD */
 
 	$("#NewGroup").on("shown.bs.modal", function() {
@@ -477,6 +481,7 @@ $UI->pos['js'].='<!-- groups js -->
 		}
 	});
 
+});
 </script>';
 }
 
