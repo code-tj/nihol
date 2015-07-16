@@ -12,8 +12,12 @@ class CORE {
     public $langs=array('en'=>'English','ru'=>'Русский','tj'=>'Тоҷикӣ');
 	public $langfile=false;
 	public $lng=array();
+    // ajax mode
+    public $ajax=false;
 
-    //private function __construct() {}
+    private function __construct() {
+        if(isset($_GET['ajax'])) $this->ajax=true;
+    }
     //private function __clone() {}
     //private function __wakeup() {}
 
@@ -65,9 +69,9 @@ class CORE {
     public static function msg($type='debug',$msg='') {
         if($msg!=''){
             if($type=='debug') {
-                if(N_DEBUG==0) { return; } else { if(isset($_GET['ajax'])){ return; } }
+                if(N_DEBUG==0) { return; } else { if($this->is_ajax()){ return; } }
             } else {
-                if(isset($_GET['ajax'])) { echo $msg; return; }
+                if($this->is_ajax()) { echo $msg; return; }
             }            
             if(isset(CORE::init()->msg_arr[$type])){
                 CORE::init()->msg_arr[$type].=htmlspecialchars($msg)."<br>\n";
@@ -114,6 +118,8 @@ class CORE {
         }
         return $result;
 	}
+
+    public function is_ajax(){ return $this->ajax; }
 
     public function get_modules(){ return $this->modules; }
     public function set_modules($new_modules,$redefine=false){
