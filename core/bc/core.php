@@ -388,6 +388,22 @@ public function isUnique($tbl='',$fld='',$val='',$err_msg='This entry already ex
     return $unique;
 }
 
+public function get_records($tbl='',$primary_fld='',$order=''){
+    $records=array();
+    if($this->connect()){
+        $sql="SELECT * FROM `".$tbl."`".$order.";";
+        $sth=$this->dbh->prepare($sql);
+        $sth->execute();
+        $this->query_count();
+        if($sth->rowCount()>0){
+            while($r=$sth->fetch()){
+                $records[$r[$primary_fld]]=$r;
+            }
+        }
+    }
+    return $records;
+}
+
 public function del($tbl='',$fld='',$id=0){
     $deleted=false;
         $id=(int) $id;

@@ -187,7 +187,7 @@ public function manage_users($model){
 		</table>';
 		} else {
 			$UI->pos['main'].='
-			<div class="well">'.\CORE::init()->lang('norecdb','No records found in the database').'</div>
+			<div class="well">'.\CORE::init()->lang('norecdb','No records found in the database.').'</div>
 			';
 		}
 	$UI->pos['js'].='<!-- users js -->
