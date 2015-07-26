@@ -9,7 +9,6 @@ public function __construct($REQUEST,$model,$view){
 		default:
 			$view->main($model);
 		break;
-
 	}	
 }
 

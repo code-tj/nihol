@@ -69,7 +69,7 @@ class CORE {
     public static function msg($type='debug',$msg='') {
         if($msg!=''){
             if($type=='debug') {
-                if(N_DEBUG==0) { return; } else { if($this->is_ajax()){ return; } }
+                if(N_DEBUG==0) { return; } else { if(CORE::init()->is_ajax()){ return; } }
             } else {
                 if(CORE::init()->is_ajax()) { echo $msg; return; }
             }            
@@ -420,6 +420,22 @@ public function del($tbl='',$fld='',$id=0){
                 $sql = "DELETE FROM `".$tbl."` WHERE `".$fld."`=:id;";
                 $sth = $DB->dbh->prepare($sql);
                 $sth->execute(array('id'=>$id));
+                $DB->query_count();
+                $deleted=true;
+            }
+        }
+    return $deleted;
+}
+
+public function del_via_key($tbl='',$fld='',$key=''){
+    $deleted=false;
+        $key=trim($key);
+        if($key!=''){
+            $DB=\DB::init();
+            if($DB->connect()){
+                $sql = "DELETE FROM `".$tbl."` WHERE `".$fld."`=:key;";
+                $sth = $DB->dbh->prepare($sql);
+                $sth->execute(array('key'=>$key));
                 $DB->query_count();
                 $deleted=true;
             }
