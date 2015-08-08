@@ -5,7 +5,7 @@ class CORE {
 
     private $msg_arr=array('error'=>'','info'=>'','debug'=>'');
     // modules: 0 - core; 1 - app;
-    private $modules=array('user'=>0,'acl'=>0,'page'=>0);
+    private $modules=array('user'=>0,'group'=>0,'acl'=>0,'page'=>0);
     public $dbcon=false;
     // language parameters
     public $lang='';

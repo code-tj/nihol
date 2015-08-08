@@ -3,18 +3,24 @@ namespace CORE\MVC\M;
 
 class USER_M {
 
-private $hint=false;
-public function hint(){return $this->hint;}
+private $pwd_hint=false;
 
-public function login($login,$password){
-$login=trim($login);
-$password=trim($password);
+public function hint(){return $this->pwd_hint;}
+
+public function login($login='',$password=''){
+	// user data initialization
+	if(isset($_POST['login']) && isset($_POST['password'])){
+		$login=trim($_POST['login']);
+		$password=trim($_POST['password']);
+	}
+	// /user data initialization
+	// $login=trim($login); $password=trim($password);
 	if($login!='' && $password!=''){
-		if($this->CheckLogin($login) && $this->CheckPassword($password)){
+		if($this->check_login($login) && $this->check_password($password)){
 			$DB=\DB::init();
 			if($DB->connect()){
 				$sth = $DB->dbh->prepare("SELECT * FROM `n-users` WHERE LOWER(`usr-login`) = LOWER(?) LIMIT 1;");
-				\CORE::msg('debug','User login check');
+				// \CORE::msg('debug','User login check');
 				$sth->bindParam(1, $login, \PDO::PARAM_STR);
 				$sth->execute();
 				$DB->query_count();
@@ -27,20 +33,21 @@ $password=trim($password);
 					$DB->query_count();
 					\CORE::msg('debug','User login and password check');
 						if($sth->rowCount()==1){
-
 							if($r['usr-status']>0){
 								$r=$sth->fetch();
-								// here will be additional checking via profile data, if needed
+								// check profile data here, if needed
 								\SESSION::start();
-								// here may be some additional records, like when login, which ip, etc
+								// here may be some additional records, like when loged in, which ip, etc
 								$uid=(int) $r['usr-uid'];
 								$gid=(int) $r['usr-gid'];
 								\SESSION::set('uid',$uid);
 								\SESSION::set('gid',$gid);
 								\SESSION::set('user',$login);
 								if(isset($r['usr-pid'])){
-									$pid=(int) $r['usr-pid'];
-									\SESSION::set('pid',$pid);
+									if($r['usr-pid']!=''){
+										$pid=(int) $r['usr-pid'];
+										\SESSION::set('pid',$pid);
+									}									
 								}
 								// setcookie(PREFX.'st',1,time()+3600); // 1 hour
 								if(isset($_POST['cookie'])){
@@ -50,17 +57,15 @@ $password=trim($password);
 								$sth = $DB->dbh->prepare("UPDATE `n-users` SET `usr-lastlogin`=CURRENT_TIMESTAMP() WHERE `usr-uid`=?;");
 								$sth->execute(array($uid));
 								$DB->query_count();
-								\CORE::msg('debug','User is logged in');
+								// \CORE::msg('debug','User is logged in');
 								header('Location: ./');
 								exit;
 							} else {
 								\CORE::msg('error','Account is currently locked');
 							}
-
 						} else { \CORE::msg('error','Incorrect username or password'); }
 				} else { \CORE::msg('error','Incorrect username or password'); }
-
-			} else { \CORE::msg('debug','DB is not connected'); } // ?? move to db class
+			}
 		} else { \CORE::msg('error','Username or password is not valid'); }
 	} else { \CORE::msg('error','Empty username or password'); }
 }
@@ -78,19 +83,21 @@ public function logout(){
 	}
 }
 
-public function CheckLogin($login){
+public function check_login($login){
 	$len=strlen($login);
-	if(\CORE::isValid($login,'/^[a-zA-Z0-9]+$/') && $len>=3 && $len<128){ return true; } else { return false; }
+	if(\CORE::isValid($login,'/^[a-zA-Z0-9]+$/') && $len>=3 && $len<128) {
+		return true;
+	} else {
+		return false;
+	}
 }
 
-public function CheckPassword($password){
+public function check_password($password){
 	$len=strlen($password);
 	if($len>=8 && $len<255){ return true; } else { return false; }
 }
 
-// ..
-
-public function GenSalt($n=3) {
+public function generate_salt($n=3) {
   $key='';
   $pattern='1234567890abcdefghijklmnopqrstuvwxyz.,*_-=+';
   $counter=strlen($pattern)-1;
@@ -98,7 +105,7 @@ public function GenSalt($n=3) {
   return $key;
 }
 
-public function randPwd($len_min=8,$len_max=0) {
+public function random_pwd($len_min=8,$len_max=0) {
 	if($len_max>$len_min){
 		$len=rand($len_min,$len_max);
 	} else {
@@ -114,21 +121,21 @@ public function randPwd($len_min=8,$len_max=0) {
     return implode($pass); // turn the array into a string
 }
 
-public function pwdGen($pwd='',$min=8,$max=0){
-if($pwd=='') { $pwd=$this->randPwd($min,$max); }
-$salt=$this->GenSalt();
-$pwd_hash=md5(md5($pwd).$salt);
-$hint=base64_encode($pwd);
-$pd=array(
-	'pwd' => $pwd,
-	'hash' => $pwd_hash,
-	'salt' => $salt,
-	'hint' => $hint,
-	);
-return $pd;
+public function generate_pwd($pwd='',$min=8,$max=0){
+	if($pwd=='') { $pwd=$this->random_pwd($min,$max); }
+	$salt=$this->generate_salt();
+	$pwd_hash=md5(md5($pwd).$salt);
+	$hint=base64_encode($pwd);
+	$pd=array(
+		'pwd' => $pwd,
+		'hash' => $pwd_hash,
+		'salt' => $salt,
+		'hint' => $hint,
+		);
+	return $pd;
 }
 
-public function auth($full_check=false,$errors=false){
+public function is_authorized($full_check=false,$errors=false){
 	$authorized=false;
 	if(\SESSION::get('uid')!=''){
 		if($full_check){
@@ -140,23 +147,25 @@ public function auth($full_check=false,$errors=false){
 				$sth->execute(array('uid'=>$uid));
 				\CORE::init()->msg('debug','Checking is user authorized via database.');
 				if($sth->rowCount()!=1){
-					header("Location: ./?c=user&act=logout"); exit;
+					header("Location: ./?c=user&act=logout");
+					exit;
 				} else { $authorized=true; }
 			}
 		} else { $authorized=true; }
 	}
 	if(!$authorized && $errors){
-		\CORE::init()->msg('error','You are not logged in.');
+		\CORE::init()->msg('error','You are not logged in');
 	}
 	return $authorized;
 }
 
 public function passwd($pwd='',$uid=0) {
-	if($this->CheckPassword($pwd)){
+	if($pwd=='' && isset($_POST['pwd'])){ $pwd=trim($_POST['pwd']); }
+	if($this->check_password($pwd)){
 		if($uid==0) { $uid=(int) \CORE\BC\USER::init()->get('uid'); }
 		$DB=\DB::init();
 		if($DB->connect()){
-			$gen_pwd=$this->pwdGen($pwd);
+			$gen_pwd=$this->generate_pwd($pwd);
 			$pwd=array(
 				'hash'=>$gen_pwd['hash'],
 				'salt'=>$gen_pwd['salt'],
@@ -175,34 +184,34 @@ public function passwd($pwd='',$uid=0) {
 	}
 }
 
-// /..
+// manage
 
 public function get_users(){
 	$users=array();
 	$DB=\DB::init();
 	if($DB->connect()){
-		$sql="SELECT * FROM `n-users` 
-		LEFT OUTER JOIN `n-groups` ON `usr-gid`=`gp-gid`
+		$sql="SELECT * FROM `n-users` LEFT OUTER JOIN `n-groups` ON `usr-gid`=`gp-gid` 
 		ORDER BY `usr-login`;";
 		$sth=$DB->dbh->prepare($sql);
 		$sth->execute();
 		$DB->query_count();
 		if($sth->rowCount()>0){
-			$statuses=array('0'=>'disabled','1'=>'active');
 			while($r=$sth->fetch()){
 					$created=$r['usr-created'];
 					$lastlogin=$r['usr-lastlogin'];
 					$status='';
 					if($created!='') $created=date('H:i:s, d.m.Y',strtotime($created));
 					if($lastlogin!='') $lastlogin=date('H:i:s, d.m.Y',strtotime($lastlogin));
-					if(isset($statuses[$r['usr-status']])) $status=$statuses[$r['usr-status']];
+					if($r['usr-status']==1) { $status='enabled'; } elseif ($r['usr-status']==0) {
+						$status='disabled';
+					}
 				$users[$r['usr-uid']]=array(
-					'username'=>$r['usr-login'],
+					'user'=>$r['usr-login'],
 					'gid'=>$r['gp-group'],
 					'pid'=>$r['usr-pid'],
 					'status'=>$status,
 					'created'=>$created,
-					'lastlogin'=>$lastlogin
+					'lastlogin'=>$lastlogin,
 					);
 			}
 		}
@@ -210,7 +219,17 @@ public function get_users(){
 	return $users;
 }
 
-public function add_user($user='',$pwd='',$gid=0,$status=1,$pid=0){
+public function get_groups(){
+	$groups=array();
+	$DB=\DB::init();
+	$recs=$DB->get_records('n-groups','gp-gid',' ORDER BY `gp-sort`');
+	foreach($recs as $key => $val){
+		$groups[$key]=$val['gp-group'];
+	}
+	return $groups;
+}
+
+public function add($user='',$pwd='',$gid=0,$status=1,$pid=0){
 	$valid=true; $errors='';
 	// user data initialization
 	if($user=='' && isset($_POST['user'])){
@@ -229,8 +248,8 @@ public function add_user($user='',$pwd='',$gid=0,$status=1,$pid=0){
 		$pid=(int) $_POST['pid'];
 	}
 	// validation
-	if($user=='' || !$this->CheckLogin($user)) $valid=false;
-	if($pwd=='' || !$this->CheckPassword($pwd)) $valid=false;
+	if($user=='' || !$this->check_login($user)) $valid=false;
+	if($pwd=='' || !$this->check_password($pwd)) $valid=false;
 	if($gid==0) $valid=false;
 	if($status<0 || $status>1) $valid=false;
 	if($pid==0) $pid=NULL;
@@ -248,7 +267,7 @@ public function add_user($user='',$pwd='',$gid=0,$status=1,$pid=0){
 				// \CORE::init()->msg('error','Such user exists in the database.');
 				$errors.='Such user exists in the database.';
 			} else {
-				$pwd_array=$this->pwdGen($pwd);
+				$pwd_array=$this->generate_pwd($pwd);
 				$usr=array(
 					'login'=>$user,
 					'hash'=>$pwd_array['hash'],
@@ -281,8 +300,9 @@ public function add_user($user='',$pwd='',$gid=0,$status=1,$pid=0){
 	if($errors!=''){echo json_encode(array('errors'=>$errors));}
 }
 
-public function edit_user($uid=0){
+public function edit($uid=0){
 	$uid=(int) $uid;
+	if($uid==0 && isset($_POST['uid'])){ $uid=(int) $_POST['uid']; }
 	if($uid>0){
 		$DB=\DB::init();
 		if($DB->connect()){
@@ -292,13 +312,13 @@ public function edit_user($uid=0){
 			$DB->query_count();
 			if($sth->rowCount()==1){
 				$r=$sth->fetch();
-				$json=json_encode(array(
+				$user=array(
 					'uid'=>$r['usr-uid'],
 					'gid'=>$r['usr-gid'],
 					'user'=>htmlspecialchars($r['usr-login']),
 					'status'=>$r['usr-status'],
-					));
-				echo $json;
+					);
+				echo json_encode($user);
 			}
 		}
 	} else {
@@ -306,8 +326,9 @@ public function edit_user($uid=0){
 	}
 }
 
-public function update_user($uid=0,$gid=0,$user='',$chpwd=0,$pwd='',$status=1,$pid=0){
+public function update($uid=0,$gid=0,$user='',$chpwd=0,$pwd='',$status=1,$pid=0){
 	$valid=true; $errors='';
+	if($uid==0 && isset($_POST['uid'])){ $uid=(int) $_POST['uid']; }
 	// user data initialization
 	if($user=='' && isset($_POST['user'])){
 		$user=trim($_POST['user']);
@@ -331,9 +352,9 @@ public function update_user($uid=0,$gid=0,$user='',$chpwd=0,$pwd='',$status=1,$p
 		$pid=(int) $_POST['pid'];
 	}
 	// validation
-	if($user=='' || !$this->CheckLogin($user)) $valid=false;
+	if($user=='' || !$this->check_login($user)) $valid=false;
 	if($chpwd!=0){
-		if($pwd=='' || !$this->CheckPassword($pwd)) $valid=false;
+		if($pwd=='' || !$this->check_password($pwd)) $valid=false;
 	}
 	if($uid==0) $valid=false;
 	if($gid==0) $valid=false;
@@ -348,7 +369,7 @@ public function update_user($uid=0,$gid=0,$user='',$chpwd=0,$pwd='',$status=1,$p
 			$sth->execute(array('user'=>$user,'uid'=>$uid));
 			$DB->query_count();
 			if($sth->rowCount()==1){
-				$pwd_array=$this->pwdGen($pwd);
+				$pwd_array=$this->generate_pwd($pwd);
 				$usr=array(
 					'hash'=>$pwd_array['hash'],
 					'salt'=>$pwd_array['salt'],
@@ -359,7 +380,7 @@ public function update_user($uid=0,$gid=0,$user='',$chpwd=0,$pwd='',$status=1,$p
 					'uid'=>$uid
 					);
 				if(!$this->hint()) $usr['hint']=NULL;
-				// insert lowercase login or not?
+				// choose: insert lowercase login or not
 				if($chpwd>0){
 					$sql = "UPDATE `n-users` SET 
 					`usr-pwd`=:hash, 
@@ -396,7 +417,7 @@ public function update_user($uid=0,$gid=0,$user='',$chpwd=0,$pwd='',$status=1,$p
 					// \CORE::init()->msg('error','Such user exists in the database.');
 					$errors.='Such user exists in the database.';
 				} else {
-					$pwd_array=$this->pwdGen($pwd);
+					$pwd_array=$this->generate_pwd($pwd);
 					$usr=array(
 						'login'=>$user,
 						'hash'=>$pwd_array['hash'],
@@ -408,7 +429,7 @@ public function update_user($uid=0,$gid=0,$user='',$chpwd=0,$pwd='',$status=1,$p
 						'uid'=>$uid
 						);
 					if(!$this->hint()) $usr['hint']=NULL;
-					// insert lowercase login or not?
+					// choose: insert lowercase login or not
 					if($chpwd>0){
 						$sql = "UPDATE `n-users` SET 
 						`usr-login`=LOWER(:login), 
@@ -450,8 +471,9 @@ public function update_user($uid=0,$gid=0,$user='',$chpwd=0,$pwd='',$status=1,$p
 
 }
 
-public function del_user($uid=0){
+public function del($uid=0){
 	$uid=(int) $uid;
+	if($uid==0 && isset($_POST['uid'])){ $uid=(int) $_POST['uid']; }
 	if($uid>0){
 		$DB=\DB::init();
 		if($DB->connect()){
@@ -466,95 +488,6 @@ public function del_user($uid=0){
 	}
 }
 
-// User groups
 
-public function get_groups(){
-	$groups=array();
-	$DB=\DB::init();
-	if($DB->connect()){
-		$sql="SELECT * FROM `n-groups` ORDER BY `gp-sort`;";
-		$sth=$DB->dbh->prepare($sql);
-		$sth->execute();
-		$DB->query_count();
-		if($sth->rowCount()>0){
-			while($r=$sth->fetch()){
-				$groups[$r['gp-gid']]=array('groupname'=>$r['gp-group']);
-			}
-		}
-	}
-	return $groups;
-}
-
-public function add_group($group_name=''){
-	$group_name=trim($group_name);
-	if($group_name!=''){
-		$DB=\DB::init();
-		if($DB->connect()){
-			if($DB->isUnique('n-groups','gp-group',$group_name)){
-				$sql = "INSERT INTO `n-groups` SET `gp-group`=:groupname;";
-				$sth = $DB->dbh->prepare($sql);
-				$sth->execute(array('groupname'=>$group_name));
-				$DB->query_count();
-				\CORE::msg('info','Group successfully added.');
-			}
-		}
-	} else {
-		\CORE::msg('error','Group name could not be empty.');
-	}
-}
-
-public function edit_group($gid=0){
-	$gid=(int) $gid;
-	if($gid>0){
-		$DB=\DB::init();
-		if($DB->connect()){
-			$sql = "SELECT * FROM `n-groups` WHERE `gp-gid`=:id;";
-			$sth = $DB->dbh->prepare($sql);
-			$sth->execute(array('id'=>$gid));
-			$DB->query_count();
-			if($sth->rowCount()==1){
-				$r=$sth->fetch();
-				echo json_encode(array('group'=>htmlspecialchars($r['gp-group'])));
-			}
-		}
-	} else {
-		\CORE::msg('error','Incorrect group ID.');
-	}
-}
-
-public function update_group($gid=0,$group=''){
-	$gid=(int) $gid;
-	$group=trim($group);
-	if($gid>0 && $group!=''){
-		$DB=\DB::init();
-		if($DB->connect()){
-			if($DB->isUnique('n-groups','gp-group',$group)){
-				$sql = "UPDATE `n-groups` SET `gp-group`=:group WHERE `gp-gid`=:gid;";
-				$sth = $DB->dbh->prepare($sql);
-				$sth->execute(array('group'=>$group,'gid'=>$gid));
-				$DB->query_count();
-				\CORE::msg('info','Group successfully updated.');
-			}
-		}
-	} else {
-		\CORE::msg('error','Incorrect group data.');
-	}
-}
-
-public function del_group($gid=0){
-	$gid=(int) $gid;
-	if($gid>0){
-		$DB=\DB::init();
-		if($DB->connect()){
-			if($DB->del('n-groups','gp-gid',$gid)){
-				\CORE::msg('info','Group successfully deleted.');
-			} else {
-				\CORE::msg('error','Group was not deleted.');
-			}
-		}
-	} else {
-		\CORE::msg('error','Incorrect ID.');
-	}
-}
 
 }
