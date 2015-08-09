@@ -143,7 +143,13 @@ class UI {
         $list=''; $s='';
             if(count($ls)>0){
                 $list.="<select".$attr.">\n";
-                if($zero!='') {$list.='<option value="0">'.$zero."</option>\n";}
+                if($zero!='') {
+                    if($sel==0) {
+                        $list.='<option value="0" selected="selected">'.$zero."</option>\n";
+                    } else {
+                        '<option value="0">'.$zero."</option>\n";
+                    }
+                }
                 if($key==''){
                     foreach ($ls as $k => $val) {
                         if($sel==$k){$s=' selected="selected"';} else {$s='';}

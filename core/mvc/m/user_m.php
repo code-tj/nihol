@@ -315,6 +315,7 @@ public function edit($uid=0){
 				$user=array(
 					'uid'=>$r['usr-uid'],
 					'gid'=>$r['usr-gid'],
+					'pid'=>$r['usr-pid'],
 					'user'=>htmlspecialchars($r['usr-login']),
 					'status'=>$r['usr-status'],
 					);
