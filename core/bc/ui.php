@@ -15,10 +15,7 @@ class UI {
         'user1'=>'',
         'main'=>'',
         );
-    private $pages=array(
-        'home'=>'home',
-        'ciscocall'=>'ciscocall'
-        );
+    private $pages=array(); // assoc
 
     public static function init() {
         if(empty(self::$inst)) {
@@ -77,6 +74,7 @@ class UI {
 
     public function tpl(){ return $this->tpl; }
     public function get_pages(){ return $this->pages; }
+    public function set_pages($pages){ $this->pages=$pages; }
 
     public function show($name='main'){
         if(isset($this->pos[$name])){ echo $this->pos[$name]; }
@@ -144,7 +142,7 @@ class UI {
             if(count($ls)>0){
                 $list.="<select".$attr.">\n";
                 if($zero!='') {
-                    if($sel==0) {
+                    if($sel<=0) {
                         $list.='<option value="0" selected="selected">'.$zero."</option>\n";
                     } else {
                         '<option value="0">'.$zero."</option>\n";

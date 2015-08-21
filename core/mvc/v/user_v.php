@@ -20,7 +20,7 @@ public function manage($model){
 	$modal_body_new='
 <div class="form-group">
 	<label for="new_group">Group</label>
-	'.$UI::html_list($groups,'',' id="new_group" class="form-control"',$sel=2).'
+	'.$UI::html_list($groups,'',' id="new_group" class="form-control"',2).'
 </div>		
 <div class="form-group">
 	<label for="new_user">Username</label>
@@ -47,7 +47,7 @@ public function manage($model){
 	$modal_body_edit='
 <div class="form-group">
 	<label for="edit_group">Group</label>
-	'.$UI::html_list($groups,'',' id="edit_group" class="form-control"',$sel=2).'
+	'.$UI::html_list($groups,'',' id="edit_group" class="form-control"',2).'
 </div>		
 <div class="form-group">
 	<input type="hidden" id="edit_uid" value="0">

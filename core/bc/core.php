@@ -293,20 +293,31 @@ class SEC {
         $uid=(string) $uid;
         $gid=(string) $gid;
 
-        // dafault acl settings
+        // dafault acl settings (0-gid type)
         $acl[0]['']['']['*']=1; // default main page
         $acl[0]['*']['*']['1']=1; // for administrators
         $acl[0]['user']['login']['0']=1; // guests can try to login
         if($gid>0){
             $acl[0]['user']['logout']['*']=1;
             $acl[0]['user']['profile']['*']=1;
+            $acl[0]['user']['change_password']['*']=1;
+            $acl[0]['user']['passwd']['*']=1;
+            // bweb2
+            $acl[0]['plist']['']['*']=1;
+            $acl[1]['es']['events']['135']=1;
+            $acl[1]['es']['events']['76']=1;
+            $acl[1]['es']['events']['126']=1; // 6; 125;
         }
+        // bweb2
         $acl[0]['page']['ciscocall']['*']=1; // page for all
+        $acl[0]['es']['']['*']=1; // es for all
+        $acl[0]['es']['list']['*']=1;
+        $acl[0]['es']['hash']['*']=1;
 
         // here we can load $acl from db
-            // $act_db=$this->get_acl_db();
+            // $acl_db=$this->get_acl_db();
         // or load $acl from json file
-            // $act_json=$this->get_acl_json();
+            // $acl_json=$this->get_acl_json();
         //// but for the moment I will use php array ;)
 
         // group gid
@@ -378,6 +389,16 @@ public function close(){
         CORE::init()->dbcon=false;
         CORE::msg('debug','Closing db connection (queries: '.$this->queries.')');
     }
+}
+
+public function table_exists($tbl) {
+    $result=false;
+    if($this->dbh!=null){
+        $res=$this->dbh->query("SHOW TABLES LIKE '$tbl'");
+        $this->query_count();
+        if($res->rowCount()>0){ $result=true; }
+    }
+    return $result;
 }
 
 public function isUnique($tbl='',$fld='',$val='',$err_msg='This entry already exists in the database.'){
