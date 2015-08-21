@@ -150,12 +150,12 @@ class UI {
                 }
                 if($key==''){
                     foreach ($ls as $k => $val) {
-                        if($sel==$k){$s=' selected="selected"';} else {$s='';}
+                        if($sel===$k){$s=' selected="selected"';} else {$s='';}
                         $list.='<option value="'.$k.'"'.$s.'>'.htmlspecialchars($val)."</option>\n";
                     }
                 } else {
                     foreach ($ls as $k => $val) {
-                        if($sel==$k){$s=' selected="selected"';} else {$s='';}
+                        if($sel===$k){$s=' selected="selected"';} else {$s='';}
                         $list.='<option value="'.$k.'"'.$s.'>'.htmlspecialchars($val[$key])."</option>\n";
                     }
                 }
