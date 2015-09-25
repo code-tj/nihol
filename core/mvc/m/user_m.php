@@ -43,6 +43,7 @@ public function login($login='',$password=''){
 								\SESSION::set('uid',$uid);
 								\SESSION::set('gid',$gid);
 								\SESSION::set('user',$login);
+								\COOKIE::set('lastuser',$login); // optional
 								if(isset($r['usr-pid'])){
 									if($r['usr-pid']!=''){
 										$pid=(int) $r['usr-pid'];
