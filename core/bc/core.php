@@ -394,11 +394,15 @@ public function close(){
 public function table_exists($tbl) {
     $result=false;
     if($this->dbh!=null){
-        $res=$this->dbh->query("SHOW TABLES LIKE '$tbl'");
-        $this->query_count();
-        if($res->rowCount()>0){ $result=true; }
+        // Run it in try/catch in case PDO is in ERRMODE_EXCEPTION.
+        try {
+            $result = $this->dbh->query("SELECT 1 FROM `$tbl` LIMIT 1;");
+        } catch (Exception $e) {
+            $result=false;
+        }
     }
-    return $result;
+    // Result is either boolean FALSE (no table found) or PDOStatement Object (table found)
+    return $result !== false;
 }
 
 public function isUnique($tbl='',$fld='',$val='',$err_msg='This entry already exists in the database.'){
