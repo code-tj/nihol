@@ -18,7 +18,7 @@ public function __construct($REQUEST,$model,$view){
 			$model->del();
 		break;
 		default:
-			$UI=\CORE\BC\UI::init();
+			$UI=\CORE\UI::init();
 			$UI->pos['main'].=$view->main($model);
 		break;
 	}

@@ -8,7 +8,7 @@ public function main($model){
 	$result='';
 	$groups=$model->get_groups();
 	$counter=count($groups);
-	$UI=\CORE\BC\UI::init();
+	$UI=\CORE\UI::init();
 	$result.='<div>
 	<h4>Groups: <span class="badge">'.$counter.'</span>&nbsp;
 	'.$UI::bootstrap_modal_btn('ShowNewGroup','NewGroup','New group').'
@@ -35,6 +35,7 @@ $result.='
 <tr>
 <th>#</th>
 <th>Group</th>
+<th>gid</th>
 <th class="text-center">ACTION</th>
 </tr>
 </thead>
@@ -47,6 +48,7 @@ $result.='
 <tr>
 	<td>'.$cnt.'</td>
 	<td>'.$group.'</td>
+	<td>'.$gid.'</td>
 	<td>
 	<div id="'.$gid.'" class="btn-group btn-group-xs">
 		<button type="button" class="btn btn-default group_edit" data-toggle="modal" data-target="#EditGroup">edit</button>

@@ -1,17 +1,19 @@
 <?php
 if(!defined('DIR_BASE')){echo '[+_+]'; exit;}
 
-if(is_readable(DIR_CORE.'/bc/core.php')) {
-	require(DIR_CORE.'/bc/core.php');
+if(is_readable(DIR_CORE.'/classes/core.php')) {
+	require(DIR_CORE.'/classes/core.php');
 } else {
-	echo 'Core class not found';
+	echo 'class CORE not found';
 	exit;
 }
 
 $CORE=CORE::init();
-$USER=\CORE\BC\USER::init();
-$UI=\CORE\BC\UI::init();
-$APP=\CORE\BC\APP::init();
+$USER=USER::init();
+$UI=\CORE\UI::init();
+$APP=\CORE\APP::init();
 
-$CORE->unload();
-$UI->show_template();
+$APP->run();
+$APP->stop();
+
+$UI->render();

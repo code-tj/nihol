@@ -16,9 +16,17 @@ local.properties
 .settings/
 .loadpath
 
+.idea
+*.*~
+*~
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
 
 # Mac crap
 .DS_Store
+
+## app config
+
+conf.php

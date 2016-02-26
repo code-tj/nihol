@@ -1,5 +1,5 @@
 <?php
-namespace CORE\BC;
+namespace CORE;
 
 class UI {
 
@@ -80,15 +80,15 @@ class UI {
         if(isset($this->pos[$name])){ echo $this->pos[$name]; }
     }
 
-    public function show_template(){
-        global $conf,$start;
-        $UI=\CORE\BC\UI::init();
+    public function render(){
+        global $conf; // start to count exec time, in index.php
+        $UI=\CORE\UI::init();
         if($UI->tpl()!=''){include($UI->tpl());}
     }
 
-    public function static_page($alias=''){
+    public function static_page($alias='',$single=false){
         if(isset($this->pages[$alias])){
-            if(\CORE::init()->lang!='') {$lang='_'.\CORE::init()->lang;} else {$lang='';}
+            if(\CORE::init()->lang!='' && !$single) {$lang='_'.\CORE::init()->lang;} else {$lang='';}
             $path=DIR_APP.'/pages/'.$this->pages[$alias].$lang.'.php';
             if(is_readable($path)){
                 include($path);
@@ -98,6 +98,7 @@ class UI {
             }
         } else {
             \CORE::msg('error','Page is not available');
+            print_r($this->pages);
         }
     }
 
@@ -125,7 +126,7 @@ class UI {
             '.$body.'
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">'.\CORE::t('close','Close').'</button>
             <input type="submit" id="'.$btn_id.'" class="btn btn-primary" value="'.$btn_txt.'">
           </div>
           </form>
@@ -145,7 +146,7 @@ class UI {
                     if($sel<=0) {
                         $list.='<option value="0" selected="selected">'.$zero."</option>\n";
                     } else {
-                        '<option value="0">'.$zero."</option>\n";
+                        $list.='<option value="0">'.$zero."</option>\n";
                     }
                 }
                 if($key==''){

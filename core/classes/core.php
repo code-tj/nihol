@@ -3,7 +3,7 @@ class CORE {
 
 	private static $inst; // instance for singleton
 
-    private $msg_arr=array('error'=>'','info'=>'','debug'=>'');
+    private $messages=array('error'=>'','info'=>'','debug'=>'');
     // modules: 0 - core; 1 - app;
     private $modules=array('user'=>0,'group'=>0,'acl'=>0,'page'=>0);
     public $dbcon=false;
@@ -11,7 +11,8 @@ class CORE {
     public $lang='';
     public $langs=array('en'=>'English','ru'=>'Русский','tj'=>'Тоҷикӣ');
 	public $langfile=false;
-	public $lng=array();
+    public $lng=array();
+	private $request=null;
     // ajax mode
     public $ajax=false;
 
@@ -26,9 +27,10 @@ class CORE {
             self::$inst = new self();
             // initialization
             CORE::check_mode();
-            spl_autoload_register('CORE::AutoLoader');
+            spl_autoload_register('CORE::autoloader');
             CORE::msg('debug','core initialization');
             SESSION::init();
+            CORE::init()->request=new REQUEST();
             CORE::check_lang();
         }
         return self::$inst; // singleton pattern
@@ -42,23 +44,21 @@ class CORE {
         }
     }
 
-    public static function AutoLoader($class) {
-        if(CORE::isValid($class,'/^[\\a-zA-Z0-9]+$/')){
-            $cls=strtolower(str_replace('\\', '/', $class));
-            $path='';
-            if(substr($cls,0,5)=='core/'){
-                $path=DIR_CORE.'/'.substr($cls,5).'.php';
-            } elseif(substr($cls,0,4)=='app/') {
-                $path=DIR_APP.'/'.substr($cls,4).'.php';
+    public static function autoloader($class) {
+        $file_path='';
+        if(preg_match('/^[\\a-zA-Z0-9_]+$/',$class)) {
+            $path=strtolower(str_replace('\\', '/', $class));
+            $first=strtok($path, '/'); // get first substr before "/"
+            if($first=='core') {
+                $file_path=DIR_CORE.'/classes/'.substr($path,5).'.php';
+            } elseif($first=='app') {
+                $file_path=DIR_APP.'/classes/'.substr($path,4).'.php';
             }
-            if(is_readable($path)) {
-                require $path;
-                //CORE::msg('debug','autoloader: '.$class); 
-            } else {
-                CORE::msg('debug','Can not find required class: '.$class);
-            }
+        }
+        if($file_path!='' && is_readable($file_path)) {
+            require $file_path;
         } else {
-            CORE::msg('debug','Not valid class name required: '.$class);
+            CORE::msg('debug','Can not load class '.$class);
         }
     }
 
@@ -73,13 +73,13 @@ class CORE {
             } else {
                 if(CORE::init()->is_ajax()) { echo $msg; return; }
             }            
-            if(isset(CORE::init()->msg_arr[$type])){
-                CORE::init()->msg_arr[$type].=htmlspecialchars($msg)."<br>\n";
+            if(isset(CORE::init()->messages[$type])){
+                CORE::init()->messages[$type].=htmlspecialchars($msg)."<br>\n";
             }
         }
     }
 
-    public static function get_msg_arr(){ return CORE::init()->msg_arr; }
+    public static function get_msg_arr(){ return CORE::init()->messages; }
 
     public static function check_lang(){
         global $conf;
@@ -100,24 +100,38 @@ class CORE {
         }
     }
 
-	public function lang($alias,$default=''){
+    // ->t() replace ->lang()
+
+    public static function t($alias,$default=''){
         $result=$default;
-        if($this->lang!=''){
-    		if(!$this->langfile){
-    			if(is_readable(DIR_CORE.'/lang/'.$this->lang.'.php')){
-    				include(DIR_CORE.'/lang/'.$this->lang.'.php');
-    				$this->lng=$lng;
-    				$this->langfile=true;
-    				//CORE::msg('debug','core language file loaded');
-    			} else { CORE::msg('debug','core language file is not loaded'); }
-    		}
-            //CORE::msg('debug','lng: '.$alias);
-    		if(isset($this->lng[$alias])){
-    			$result=$this->lng[$alias];
-    		}
+        $CORE=CORE::init();
+        if($CORE->lang!=''){
+            if(!$CORE->langfile){
+                if(is_readable(DIR_CORE.'/translation/'.$CORE->lang.'.php')){
+                    $lng=$CORE->lng;
+                    include(DIR_CORE.'/translation/'.$CORE->lang.'.php');
+                    $CORE->lng=$lng;
+                    $CORE->langfile=true;
+                    CORE::msg('debug','core language file loaded');
+                } else { CORE::msg('debug','core language file is not loaded'); }
+            }
+            //CORE::msg('debug','t: '.$alias);
+            if(isset($CORE->lng[$alias])){
+                $result=$CORE->lng[$alias];
+            }
         }
         return $result;
-	}
+    }
+
+    public static function get_c(){
+        return CORE::init()->request->get('c');
+    }
+
+    public static function lng(){return CORE::init()->lang;}
+    public static function set_lng($lng){
+        // experimental
+        CORE::init()->lng=$lng;
+    }
 
     public function is_ajax(){ return $this->ajax; }
 
@@ -144,6 +158,103 @@ class CORE {
         // what if php exit()... maybe needs some register_shutdown_function()
         //$this->includes();
         if($this->dbcon){DB::init()->close();}
+    }
+
+    public static function ROUTER(){
+        $REQUEST=\CORE::init()->request;
+        \CORE::init()->c=$REQUEST->get('c');
+        $USER=USER::init();
+        $modules=\CORE::init()->get_modules();
+        if($REQUEST->get('c')==''){
+            if($USER->auth()){
+                if($USER->get('gid')==1){
+                    \CORE\UI::init()->static_page('admin',true);
+                } else {
+                    \CORE\UI::init()->static_page('user',true);
+                }
+            } else {
+                \CORE\UI::init()->static_page('home');
+            }    
+        } else {
+            if(isset($modules[$REQUEST->get('c')])){
+                // \CORE::msg('debug','Controller: '.$REQUEST->get('c'));
+                    $model=null; $view=null; $controller=null;
+                    $p2=strtoupper($REQUEST->get('c'));
+                    $path=array('m'=>'','v'=>'','c'=>'');
+                if($modules[$REQUEST->get('c')]==0){
+                    $p1='CORE\\MVC\\';
+                    $path['m']=$p1.'M\\'.$p2.'_M';
+                    $path['v']=$p1.'V\\'.$p2.'_V';
+                    $path['c']=$p1.'C\\'.$p2.'_C';
+                } else {
+                    $p1='APP\\MVC\\';
+                    $path['m']=$p1.'M\\'.$p2.'_M';
+                    $path['v']=$p1.'V\\'.$p2.'_V';
+                    $path['c']=$p1.'C\\'.$p2.'_C';
+                }
+                    if(class_exists($path['c'])){
+                        if(\SEC::init()->acl($REQUEST->get('c'),$REQUEST->get('act'))){ // access control ($USER)
+                            if(class_exists($path['m'])){ $model = new $path['m'](); }
+                            if(class_exists($path['v'])){ $view = new $path['v'](); }
+                            $controller = new $path['c']($REQUEST,$model,$view);
+                        }
+                    } else {
+                        \CORE::msg('error','Module not loaded');
+                    }
+            } else {
+                \CORE::msg('error','Unregistered module');
+                if($USER->auth()){
+                    if($USER->get('gid')==1){
+                        \CORE\UI::init()->static_page('admin',true);
+                    } else {
+                        \CORE\UI::init()->static_page('user',true);
+                    }
+                } else {
+                    \CORE\UI::init()->static_page('home');
+                }
+            }
+        }
+    }
+
+    public static function g($var,$pre=false){ // like print (g from get)
+        $result='';
+        switch (gettype($var)) {
+            case 'boolean':
+                ($var ? $result='true' : $result='false');
+                break;
+            // integer, double, string, array, object, resource, NULL, unknown type
+            default:
+                $result=print_r($var,true);
+                break;
+        }
+        if($pre) $result='<pre>'.$result.'</pre>';
+        return $result;
+    }
+
+}
+
+class REQUEST {
+
+    private $c='';
+    private $act='';
+
+    public function __construct() {
+        if(isset($_GET['c'])){
+            $c=trim($_GET['c']);
+            if(CORE::isValid($c,'/^[a-z]+$/')){
+                $this->c=$c; // controller
+                if(isset($_GET['act'])){
+                    $act=trim($_GET['act']);
+                    if(CORE::isValid($act,'/^[a-zA-Z0-9_]+$/')){
+                        $this->act=$act; // action                  
+                    } else {CORE::msg('error','Unregistered action');}
+                }
+            } else {CORE::msg('error','Incorrect module name');}
+        }
+    }
+
+    public function get($param=''){
+        if(isset($this->$param)){return $this->$param;} else {return '';}
     }
 
 }
@@ -263,6 +374,15 @@ class SEC {
         return $acl;
     }
 
+    public function get_acl_file($path=''){
+        if($path=='') $path=PATH_APP.'/acl.php';
+        $acl=array();
+        if(is_readable($path)){
+            include($path);
+        }
+        return $acl;
+    }
+
     public function check_acl($acl,$type,$c,$act,$id){
         $a=false;
         //\CORE::msg('debug','type:'.$type.';c:'.$c.';act:'.$act.';id:'.$id.';');
@@ -287,11 +407,13 @@ class SEC {
         \CORE::msg('debug','Checking ACL');
         $access=false;
 
-        $USER=\CORE\BC\USER::init();
+        $USER=\USER::init();
         $uid=(int) $USER->get('uid');
         $gid=(int) $USER->get('gid');
         $uid=(string) $uid;
         $gid=(string) $gid;
+
+        $acl=$this->get_acl_file();
 
         // dafault acl settings (0-gid type)
         $acl[0]['']['']['*']=1; // default main page
@@ -300,25 +422,7 @@ class SEC {
         if($gid>0){
             $acl[0]['user']['logout']['*']=1;
             $acl[0]['user']['profile']['*']=1;
-            $acl[0]['user']['change_password']['*']=1;
-            $acl[0]['user']['passwd']['*']=1;
-            // bweb2
-            $acl[0]['plist']['']['*']=1;
-            $acl[1]['es']['events']['135']=1;
-            $acl[1]['es']['events']['76']=1;
-            $acl[1]['es']['events']['126']=1; // 6; 125;
         }
-        // bweb2
-        $acl[0]['page']['ciscocall']['*']=1; // page for all
-        $acl[0]['es']['']['*']=1; // es for all
-        $acl[0]['es']['list']['*']=1;
-        $acl[0]['es']['hash']['*']=1;
-
-        // here we can load $acl from db
-            // $acl_db=$this->get_acl_db();
-        // or load $acl from json file
-            // $acl_json=$this->get_acl_json();
-        //// but for the moment I will use php array ;)
 
         // group gid
         if($this->check_acl($acl,0,$c,$act,$gid)) $access=true;
@@ -328,6 +432,59 @@ class SEC {
 
         if(!$access) \CORE::msg('error','Access denied.');
         return $access;
+    }
+
+}
+
+class USER {
+
+    private static $inst;
+
+    private $uid=0; // user id
+    private $gid=0; // group id
+    private $pid=0; // profile id
+    private $username=''; // username
+
+    public static function init() {
+        if(empty(self::$inst)) {
+            self::$inst = new self();
+        }
+        return self::$inst;
+    }
+
+    private function __construct() {
+        $uid=SESSION::get('uid');
+        if($uid!=''){
+            $this->uid=(int) $uid;
+            if($this->uid>0){
+                $gid=SESSION::get('gid');
+                if($gid!='') $this->gid=(int) $gid;
+                $pid=SESSION::get('pid');
+                if($pid!='') $this->pid=(int) $pid;
+                $user=SESSION::get('user');
+                if($user!='') $this->username=$user;
+            }
+        }
+        CORE::msg('debug','user (uid:'.$this->uid.'; gid:'.$this->gid.';)');
+    }
+
+    public function get($item){
+        if(isset($this->$item)) {
+            return $result=$this->$item;
+        } else {
+            return '';
+        }
+    }
+
+    public function set($prop,$value){
+        if(!isset($this->$prop)) {
+            $this->$prop=$value;
+        }
+    }
+
+    public function auth(){
+        $result=($this->uid > 0 ? true : false);
+        return $result;
     }
 
 }
@@ -469,3 +626,4 @@ public function del_via_key($tbl='',$fld='',$key=''){
 }
 
 }
+

@@ -11,12 +11,9 @@ public function __construct($REQUEST,$model,$view){
 		case 'logout':
 			$model->logout();
 		break;
-		case 'profile':
-			$view->profile($model);
-		break;
-		case 'change_password':
+		case 'chpwd':
 			$UI=\CORE\BC\UI::init();
-			$UI->pos['main'].=$view->change_pwd();
+			$UI->pos['main'].=$view->chpwd();
 		break;
 		case 'passwd':
 			$model->passwd();
