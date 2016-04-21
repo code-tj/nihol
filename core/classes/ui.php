@@ -102,9 +102,9 @@ class UI {
         }
     }
 
-    public static function bootstrap_modal_btn($id='show_myModal',$target='myModal',$text='ShowModal'){
+    public static function bootstrap_modal_btn($id='show_myModal',$target='myModal',$text='ShowModal',$other=''){
         $result='<button id="'.$id.'" type="button" class="btn btn-success btn-xs"
-        data-toggle="modal" data-target="#'.$target.'">'.$text.'</button>
+        data-toggle="modal" data-target="#'.$target.'"'.$other.'>'.$text.'</button>
         ';
         return $result;
     }

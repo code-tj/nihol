@@ -163,7 +163,7 @@ public function is_authorized($full_check=false,$errors=false){
 public function passwd($pwd='',$uid=0) {
 	if($pwd=='' && isset($_POST['pwd'])){ $pwd=trim($_POST['pwd']); }
 	if($this->check_password($pwd)){
-		if($uid==0) { $uid=(int) \CORE\BC\USER::init()->get('uid'); }
+		if($uid==0) { $uid=(int) \USER::init()->get('uid'); }
 		$DB=\DB::init();
 		if($DB->connect()){
 			$gen_pwd=$this->generate_pwd($pwd);

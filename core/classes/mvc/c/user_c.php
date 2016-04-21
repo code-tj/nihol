@@ -12,7 +12,7 @@ public function __construct($REQUEST,$model,$view){
 			$model->logout();
 		break;
 		case 'chpwd':
-			$UI=\CORE\BC\UI::init();
+			$UI=\CORE\UI::init();
 			$UI->pos['main'].=$view->chpwd();
 		break;
 		case 'passwd':

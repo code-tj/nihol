@@ -280,12 +280,12 @@ public function profile($model){
 	return $result;
 }
 
-public function change_pwd(){
+public function chpwd(){
 	$result='';
-	$UI=\CORE\BC\UI::init();
+	$UI=\CORE\UI::init();
 	$result.='
 <div class="col-md-4">
-	<h4>Change password:</h4>
+	<h4>Change your password:</h4>
 	<br>
 	<form id="frm_chpwd">
 	<div class="form-group">

@@ -422,6 +422,8 @@ class SEC {
         if($gid>0){
             $acl[0]['user']['logout']['*']=1;
             $acl[0]['user']['profile']['*']=1;
+            $acl[0]['user']['chpwd']['*']=1;
+            $acl[0]['user']['passwd']['*']=1;
         }
 
         // group gid
