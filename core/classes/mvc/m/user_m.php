@@ -735,7 +735,7 @@ public function get_uid_via_username($username=''){
 
 public function iforgot_email($hash='',$username='',$email=''){
 	if($hash!='' && $username!='' && $email!=''){
-		\APP\MAILER\MAILBOT::msg($email,$hash,$username);
+		\APP\CLASSES\MAILER\MAILBOT::msg($email,$hash,$username);
 	}
 }
 
