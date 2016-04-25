@@ -659,7 +659,8 @@ public function iforgot_create($ihash='',$username='',$email=''){
 				`ft-email`=:email,
 				`ft-time`=NOW() + INTERVAL 12 HOUR,
 				`ft-ihash`=:ihash,
-				`ft-ip`=:xip;";
+				`ft-ip`=:xip,
+				`ft-created`=NOW();";
 				$sth = $DB->dbh->prepare($sql);
 				$sth->execute(array('hash'=>$hash,'username'=>$username,'email'=>$email,'ihash'=>$ihash,'xip'=>$xip));
 				$DB->query_count();
@@ -734,7 +735,7 @@ public function get_uid_via_username($username=''){
 
 public function iforgot_email($hash='',$username='',$email=''){
 	if($hash!='' && $username!='' && $email!=''){
-		
+		\APP\MAILER\MAILBOT::msg($email,$hash,$username);
 	}
 }
 
