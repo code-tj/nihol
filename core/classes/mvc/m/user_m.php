@@ -735,7 +735,11 @@ public function get_uid_via_username($username=''){
 
 public function iforgot_email($hash='',$username='',$email=''){
 	if($hash!='' && $username!='' && $email!=''){
-		\APP\CLASSES\MAILER\MAILBOT::msg($email,$hash,$username);
+		$path=DIR_APP.'/classes/mailer/mailbot.php';
+		if(is_readable($path)){
+			require $path;
+			\MAILBOT::msg($email,$hash,$username);
+		}		
 	}
 }
 
