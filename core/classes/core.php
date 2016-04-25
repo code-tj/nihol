@@ -419,6 +419,8 @@ class SEC {
         $acl[0]['']['']['*']=1; // default main page
         $acl[0]['*']['*']['1']=1; // for administrators
         $acl[0]['user']['login']['0']=1; // guests can try to login
+        $acl[0]['user']['login2']['0']=1; // guests can try to login2
+        $acl[0]['user']['iforgot']['0']=1; // if user forgot pwd
         if($gid>0){
             $acl[0]['user']['logout']['*']=1;
             $acl[0]['user']['profile']['*']=1;
@@ -456,6 +458,17 @@ class USER {
 
     private function __construct() {
         $uid=SESSION::get('uid');
+        if($uid==''){
+            // if remembered
+            $lu=COOKIE::get('lastuser');
+            $tmr=COOKIE::get('tmr');
+            if($lu!='' && $tmr!=''){
+                $user_m=new \CORE\MVC\M\USER_M();
+                $user_m->try_to_remember($lu,$tmr);
+            } else {
+                if($tmr!=''){COOKIE::remove('tmr');}
+            }
+        }
         if($uid!=''){
             $this->uid=(int) $uid;
             if($this->uid>0){

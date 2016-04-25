@@ -345,5 +345,170 @@ $(document).ready(function(){
 }
 
 
+public function iforgot($model){
+	$result='';
+	\SESSION::start();
+	$path=DIR_APP."/captcha/simple-php-captcha.php";
+	$status=0;
+	if(isset($_POST['vcode'])){
+		$status=2;
+	}
+	if(isset($_GET['link'])){
+		$status=3;
+	}
+	if(isset($_POST['pwd'])){
+		$status=4;
+	}
+	if($status==0){
+		if(is_readable($path)) {
+			include($path);
+			$_SESSION = array();
+			$_SESSION['captcha'] = simple_php_captcha();
+			$status=1;
+		} else {
+			\CORE::msg('error','Some problems with connection of external libs.');
+		}
+	}	
+	if($status==1){
+		$result.='<h3>Having trouble signing in?</h3>
+<p>Please enter your username and verification code, then click OK. ..</p>
+<form action="./?c=user&act=iforgot" method="post">
+<div class="row"><div class="col-md-4">
+<hr>
+  <div class="form-group">
+    <label for="username">Username</label>
+    <input type="text" class="form-control" id="username" name="username" placeholder="username" value="'.\COOKIE::get('lastuser').'" style="width:240px;">
+  </div>
+  <div class="form-group"><br>
+  <img src="'.$_SESSION['captcha']['image_src'].'" alt="verification code">
+  </div>
+  <div class="form-group">
+    <!--<label for="vcode">Verification code</label>-->
+    <input type="text" class="form-control" id="vcode" name="vcode" placeholder="verification code" style="width:240px;font-size:18px;">
+  </div>
+  <input type="hidden" id="ihash" name="ihash" value="'.base64_encode(md5(time())).'">
+  <button type="submit" class="btn btn-primary">OK</button>
+</div></div>
+</form>
+';
+	}
+	if($status==2){
+		$username='';
+		$vcode='';
+		$ihash='';
+		$valid=true;
+		if(isset($_POST['username'])) $username=trim($_POST['username']);
+		if(isset($_POST['vcode'])) $vcode=trim($_POST['vcode']);
+		if(isset($_POST['ihash'])) $ihash=trim($_POST['ihash']);
+		if($username!='' && $vcode!='' && $ihash!=''){
+			if(isset($_SESSION['captcha']['code'])){
+				if(strtolower($vcode)!=strtolower($_SESSION['captcha']['code'])){
+					\CORE::msg('error','Verify code did not match.');
+					$valid=false;
+				} else {
+					// refresh ifrogot record in DB
+					$model->iforgot_clean();
+					$email=$model->iforgot_get_email($username);
+					if($email!=''){
+						$model->iforgot_create($ihash,$username,$email);
+					} else {
+						\CORE::msg('error','No Such user Here or E-mail is not linked to Such user!');
+						$valid=false;
+					}
+				}
+			}
+		} else {
+			\CORE::msg('error','Empty username or verification code!');
+			$valid=false;
+		}
+		if(!$valid){
+			$result.='<p><a class="btn btn-primary" href="./?c=user&act=iforgot"> Back </a></p>';
+		}
+	}
+	if($status==3){
+		$link=''; $link_valid=false;
+		if(isset($_GET['link'])){
+			$link=trim($_GET['link']);
+		}
+		if($link!=''){
+			$linked_username=$model->iforgot_check_link($link);
+			if($linked_username!=''){
+				$link_valid=true;
+				$UI=\CORE\UI::init();
+				$result.='
+<div class="col-md-4">
+	<h4>Reset your password:</h4>
+	<br>
+	<form id="frm_chpwd2">
+	<div class="form-group">
+		<label for="pwd">New password</label>
+		<input type="password" class="form-control" id="pwd" placeholder="password">
+	</div>
+	<div class="form-group">
+		<label for="pwd2">Retype new password</label>
+		<input type="password" class="form-control" id="pwd2" placeholder="password">
+	</div>
+	<div class="form-group">
+		<input type="hidden" id="xlink" value="'.$link.'">
+		<input type="submit" id="chpwd2" class="btn btn-danger" value="Change password">
+	</div>
+	</form>
+</div>
+';
+				$UI->pos['js'].='
+<script type="text/javascript">
+$(document).ready(function(){
+
+	function check_pwd(pwd){
+		var xlen = pwd.length
+		if(xlen>=8 && xlen<255){ return true; } else { return false; }
+	}
+
+	$("#pwd").focus();
+
+	$("#frm_chpwd").submit(function(e){
+		e.preventDefault();
+	});
+
+	$("#chpwd2").click(function(){
+		var xpwd = $("#pwd").val();
+		var xlnk = $("#xlink").val();
+		if(check_pwd(xpwd)){
+			if(xpwd==$("#pwd2").val()){
+				$.post("./?c=user&act=iforgot&pwd&ajax", {link:xlnk,pwd:xpwd}, function(data){
+					if(data=="Password successfully changed."){
+						alert("Password successfully changed.");
+						window.location.replace("./");
+						// location.reload();
+					} else {
+						alert("Error. Check JS console log.");
+						console.log(data);
+					}
+				});
+			} else {
+				alert("Password does not match the confirm password.");
+			}
+		} else {
+			alert("Password is not valid.");
+		}
+	});
+
+});
+</script>';
+			}
+		}
+		if(!$link_valid){
+			\CORE::msg('error','This link is not active.');
+		}
+	}
+	if($status==4){
+		// reset pwd
+		if(isset($_POST['link']) && isset($_POST['pwd'])){
+			$model->iforgot_passwd($_POST['link'],$_POST['pwd']);
+		}
+	}
+	return $result;
+}
+
 
 }

@@ -8,6 +8,9 @@ public function __construct($REQUEST,$model,$view){
 		case 'login':
 			$model->login();
 		break;
+		case 'login2':
+			$model->login2();
+		break;
 		case 'logout':
 			$model->logout();
 		break;
@@ -17,6 +20,15 @@ public function __construct($REQUEST,$model,$view){
 		break;
 		case 'passwd':
 			$model->passwd();
+		break;
+		case 'iforgot':
+			global $conf;
+			if(isset($conf['iforgot']) && $conf['iforgot']==1){
+				$UI=\CORE\UI::init();
+				$UI->pos['main'].=$view->iforgot($model);
+			} else {
+				\CORE::msg('error','This option is disabled.');
+			}			
 		break;
 		case 'manage':
 			if(isset($_GET['do'])){

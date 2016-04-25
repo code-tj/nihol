@@ -71,10 +71,126 @@ public function login($login='',$password=''){
 	} else { \CORE::msg('error','Empty username or password'); }
 }
 
+public function login2($login='',$password='',$remember=0){
+	// user data initialization
+	if(isset($_POST['login']) && isset($_POST['password'])){
+		$login=trim($_POST['login']);
+		$password=trim($_POST['password']);
+	}
+	if(isset($_POST['remember'])){
+		$remember=(int) $_POST['remember'];
+	}
+	// /user data initialization
+	// $login=trim($login); $password=trim($password);
+	if($login!='' && $password!=''){
+		if($this->check_login($login) && $this->check_password($password)){
+			$DB=\DB::init();
+			if($DB->connect()){
+				$sth = $DB->dbh->prepare("SELECT * FROM `n-users` WHERE LOWER(`usr-login`) = LOWER(?) LIMIT 1;");
+				// \CORE::msg('debug','User login check');
+				$sth->bindParam(1, $login, \PDO::PARAM_STR);
+				$sth->execute();
+				$DB->query_count();
+				if($sth->rowCount()==1){
+					$r=$sth->fetch();
+					$salt=$r['usr-salt'];
+					$hashpass=md5(md5($password).$salt);
+					$sth = $DB->dbh->prepare("SELECT * FROM `n-users` WHERE LOWER(`usr-login`)=LOWER(:login) AND `usr-pwd`=:hashpass LIMIT 1;");
+					$sth->execute(array(':login'=>$login,':hashpass'=>$hashpass));
+					$DB->query_count();
+					// \CORE::msg('debug','User login and password check');
+						if($sth->rowCount()==1){
+							if($r['usr-status']>0){
+								$r=$sth->fetch();
+								// check profile data here, if needed
+								\SESSION::start();
+								// here may be some additional records, like when loged in, which ip, etc
+								$uid=(int) $r['usr-uid'];
+								$gid=(int) $r['usr-gid'];
+								\SESSION::set('uid',$uid);
+								\SESSION::set('gid',$gid);
+								\SESSION::set('user',$login);
+								if(isset($r['usr-pid'])){
+									if($r['usr-pid']!=''){
+										$pid=(int) $r['usr-pid'];
+										\SESSION::set('pid',$pid);
+									}									
+								}
+								// setcookie(PREFX.'st',1,time()+3600); // 1 hour
+								if($remember==1){
+									$ip=''; $xip=''; $agent=''; $xdt='';
+									$xdt=date('d.m.Y');
+									if(isset($_SERVER['REMOTE_ADDR'])) $ip=$_SERVER['REMOTE_ADDR'];
+									if(isset($_SERVER['HTTP_X_FORWARDED_FOR'])) $xip=$_SERVER['HTTP_X_FORWARDED_FOR'];
+									if(isset($_SERVER['HTTP_USER_AGENT'])) $agent=$_SERVER['HTTP_USER_AGENT'];
+									\COOKIE::set('lastuser',$login); // optional
+									\COOKIE::set('tmr',md5($hashpass.$xdt.$ip.$xip.$agent));
+								}
+								$sth = $DB->dbh->prepare("UPDATE `n-users` SET `usr-lastlogin`=CURRENT_TIMESTAMP() WHERE `usr-uid`=?;");
+								$sth->execute(array($uid));
+								$DB->query_count();
+								// \CORE::msg('debug','User is logged in');
+								// //header('Location: ./');
+								// //exit;
+								echo 'ok';
+							} else {
+								\CORE::msg('error','Account is currently locked');
+							}
+						} else { \CORE::msg('error','Incorrect username or password'); }
+				} else { \CORE::msg('error','Incorrect username or password'); }
+			}
+		} else { \CORE::msg('error','Username or password is not valid'); }
+	} else { \CORE::msg('error','Empty username or password'); }
+}
+
+public function try_to_remember($lu='',$tmr=''){
+	$lu=strtolower(trim($lu)); $tmr=trim($tmr);
+	if($lu!='' && $tmr!=''){
+		$DB=\DB::init();
+		if($DB->connect()){
+			$sth = $DB->dbh->prepare("SELECT * FROM `n-users` WHERE LOWER(`usr-login`) = LOWER(:lu) LIMIT 1;");
+			$sth->execute(array('lu'=>$lu));
+			$DB->query_count();
+			if($sth->rowCount()==1){
+				$r=$sth->fetch();
+				if($r['usr-status']>0){
+					$ip=''; $xip=''; $agent=''; $xdt='';
+					$xdt=date('d.m.Y');
+					if(isset($_SERVER['REMOTE_ADDR'])) $ip=$_SERVER['REMOTE_ADDR'];
+					if(isset($_SERVER['HTTP_X_FORWARDED_FOR'])) $xip=$_SERVER['HTTP_X_FORWARDED_FOR'];
+					if(isset($_SERVER['HTTP_USER_AGENT'])) $agent=$_SERVER['HTTP_USER_AGENT'];
+					if($tmr==md5($r['usr-pwd'].$xdt.$ip.$xip.$agent)){
+						\SESSION::start();
+						$uid=(int) $r['usr-uid'];
+						$gid=(int) $r['usr-gid'];
+						\SESSION::set('uid',$uid);
+						\SESSION::set('gid',$gid);
+						\SESSION::set('user',$lu);
+						if(isset($r['usr-pid'])){
+							if($r['usr-pid']!=''){
+								$pid=(int) $r['usr-pid'];
+								\SESSION::set('pid',$pid);
+							}
+						}
+						if(isset($_SERVER['REQUEST_URI'])) {$uri=$_SERVER['REQUEST_URI'];} else {$uri='./';}
+						//header('Location: '.$uri);
+						//exit;
+						
+						//$sth = $DB->dbh->prepare("UPDATE `n-users` SET `usr-lastlogin`=CURRENT_TIMESTAMP() WHERE `usr-uid`=?;");
+						//$sth->execute(array($uid));
+						//$DB->query_count();
+					}
+				}
+			}
+		}
+	}
+}
+
 public function logout(){
 	if(\SESSION::get('uid')!=''){
 		// session_destroy();
         // session_unset();
+        \COOKIE::set('tmr','');
 		\SESSION::remove_all(); // only for this app
 		// setcookie(PREFX.'st',0,1);
 		header("Location: ./"); // here we can put session message like "you logged out"
@@ -490,6 +606,137 @@ public function del($uid=0){
 	}
 }
 
+public function iforgot_clean(){
+	$DB=\DB::init();
+	if($DB->connect()){
+		$sql = "DELETE FROM `bw-iforgot` WHERE `ft-time` < NOW() OR `ft-status`=0;";
+		$sth = $DB->dbh->prepare($sql);
+		$sth->execute();
+		$DB->query_count();
+	}
+}
+
+public function iforgot_get_email($username=''){
+	$email='';
+	if($username!=''){
+		$DB=\DB::init();
+		if($DB->connect()){
+			$sql = "SELECT `usr-uid`,`usr-login`,`usr-email` FROM `n-users` WHERE `usr-login`=:username;";
+			$sth = $DB->dbh->prepare($sql);
+			$sth->execute(array('username'=>$username));
+			$DB->query_count();
+			if($sth->rowCount()==1){
+				$r=$sth->fetch();
+				$email=trim($r['usr-email']);
+			}
+		}
+	}	
+	return $email;
+}
+
+public function iforgot_create($ihash='',$username='',$email=''){
+	if($ihash!='' && $username!='' && $email!=''){
+		$DB=\DB::init();
+		if($DB->connect()){
+			$sql = "SELECT * FROM `bw-iforgot` WHERE `ft-username`=:username AND `ft-ihash`=:ihash;";
+			$sth = $DB->dbh->prepare($sql);
+			$sth->execute(array('username'=>$username,'ihash'=>$ihash));
+			$DB->query_count();
+			if($sth->rowCount()>0){
+				\CORE::msg('error','The link already created and email already sent.');
+			} else {
+				$hash=md5($username.microtime());
+				$xip=NULL; $ip1=''; $ip2=''; // $agent='';
+				if(isset($_SERVER['REMOTE_ADDR'])) $ip1=$_SERVER['REMOTE_ADDR'];
+				if(isset($_SERVER['HTTP_X_FORWARDED_FOR'])) $ip2=$_SERVER['HTTP_X_FORWARDED_FOR'];
+				//if(isset($_SERVER['HTTP_USER_AGENT'])) $agent=$_SERVER['HTTP_USER_AGENT'];
+				if($ip1!='' || $ip2!=''){
+					$xip='ADDR: '.$ip1.', XFWD: '.$ip2;
+				}		
+				$sql = "INSERT INTO `bw-iforgot` SET 
+				`ft-hash`=:hash, 
+				`ft-username`=:username,
+				`ft-email`=:email,
+				`ft-time`=NOW() + INTERVAL 12 HOUR,
+				`ft-ihash`=:ihash,
+				`ft-ip`=:xip;";
+				$sth = $DB->dbh->prepare($sql);
+				$sth->execute(array('hash'=>$hash,'username'=>$username,'email'=>$email,'ihash'=>$ihash,'xip'=>$xip));
+				$DB->query_count();
+				$this->iforgot_email($hash,$username,$email);
+				\CORE::msg('info','In a few minutes you will receive an email with instruction to reset your password.');
+				\CORE::msg('info','If you did not receive an email within 10 minutes, please contact you system administrator');
+			}
+		}
+	}
+}
+
+
+public function iforgot_check_link($link=''){
+	$username='';
+	if($link!=''){
+		$DB=\DB::init();
+		if($DB->connect()){
+		$sql = "SELECT * FROM `bw-iforgot` WHERE `ft-hash`=:hash AND `ft-status`=1;";
+		$sth = $DB->dbh->prepare($sql);
+		$sth->execute(array('hash'=>$link));
+		$DB->query_count();
+			if($sth->rowCount()==1){
+				$r=$sth->fetch();
+				$username=$r['ft-username'];
+			}
+		}
+	}
+	return $username;
+}
+
+public function iforgot_passwd($link='',$pwd=''){
+	$link=trim($link); $pwd=trim($pwd);
+	if($link!='' && $pwd!=''){
+		$username=$this->iforgot_check_link($link);
+		if($username!=''){
+			$uid=(int) $this->get_uid_via_username($username);
+			$this->passwd($pwd,$uid);
+			$this->iforgot_deactivate_link($link);
+		}
+	}
+}
+
+public function iforgot_deactivate_link($link=''){
+	if($link!=''){
+		$DB=\DB::init();
+		if($DB->connect()){
+			$sql = "UPDATE `bw-iforgot` SET `ft-status`=0 WHERE `ft-hash`=:hash;";
+			$sth = $DB->dbh->prepare($sql);
+			$sth->execute(array('hash'=>$link));
+			$DB->query_count();
+		}
+	}
+}
+
+public function get_uid_via_username($username=''){
+	$uid=0;
+	if($username!=''){
+		$DB=\DB::init();
+		if($DB->connect()){
+			$sql = "SELECT `usr-uid`,`usr-login`,`usr-email` FROM `n-users` WHERE `usr-login`=:username;";
+			$sth = $DB->dbh->prepare($sql);
+			$sth->execute(array('username'=>$username));
+			$DB->query_count();
+			if($sth->rowCount()==1){
+				$r=$sth->fetch();
+				$uid=(int) $r['usr-uid'];
+			}
+		}
+	}
+	return $uid;
+}
+
+public function iforgot_email($hash='',$username='',$email=''){
+	if($hash!='' && $username!='' && $email!=''){
+		
+	}
+}
 
 
 }
