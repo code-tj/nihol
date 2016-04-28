@@ -172,7 +172,7 @@ public function try_to_remember($lu='',$tmr=''){
 								\SESSION::set('pid',$pid);
 							}
 						}
-						if(isset($_SERVER['REQUEST_URI'])) {$uri=$_SERVER['REQUEST_URI'];} else {$uri='./';}
+						//if(isset($_SERVER['REQUEST_URI'])) {$uri=$_SERVER['REQUEST_URI'];} else {$uri='./';}
 						//header('Location: '.$uri);
 						//exit;
 						

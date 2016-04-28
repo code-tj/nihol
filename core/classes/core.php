@@ -465,6 +465,7 @@ class USER {
             if($lu!='' && $tmr!=''){
                 $user_m=new \CORE\MVC\M\USER_M();
                 $user_m->try_to_remember($lu,$tmr);
+                $uid=SESSION::get('uid');
             } else {
                 if($tmr!=''){COOKIE::remove('tmr');}
             }
