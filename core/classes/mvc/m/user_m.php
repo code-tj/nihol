@@ -119,12 +119,11 @@ public function login2($login='',$password='',$remember=0){
 								// setcookie(PREFX.'st',1,time()+3600); // 1 hour
 								if($remember==1){
 									$ip=''; $xip=''; $agent=''; $xdt='';
-									$xdt=date('d.m.Y');
 									if(isset($_SERVER['REMOTE_ADDR'])) $ip=$_SERVER['REMOTE_ADDR'];
 									if(isset($_SERVER['HTTP_X_FORWARDED_FOR'])) $xip=$_SERVER['HTTP_X_FORWARDED_FOR'];
 									if(isset($_SERVER['HTTP_USER_AGENT'])) $agent=$_SERVER['HTTP_USER_AGENT'];
 									\COOKIE::set('lastuser',$login); // optional
-									\COOKIE::set('tmr',md5($hashpass.$xdt.$ip.$xip.$agent));
+									\COOKIE::set('tmr',md5($hashpass.$ip.$xip.$agent));
 								}
 								$sth = $DB->dbh->prepare("UPDATE `n-users` SET `usr-lastlogin`=CURRENT_TIMESTAMP() WHERE `usr-uid`=?;");
 								$sth->execute(array($uid));
@@ -155,11 +154,10 @@ public function try_to_remember($lu='',$tmr=''){
 				$r=$sth->fetch();
 				if($r['usr-status']>0){
 					$ip=''; $xip=''; $agent=''; $xdt='';
-					$xdt=date('d.m.Y');
 					if(isset($_SERVER['REMOTE_ADDR'])) $ip=$_SERVER['REMOTE_ADDR'];
 					if(isset($_SERVER['HTTP_X_FORWARDED_FOR'])) $xip=$_SERVER['HTTP_X_FORWARDED_FOR'];
 					if(isset($_SERVER['HTTP_USER_AGENT'])) $agent=$_SERVER['HTTP_USER_AGENT'];
-					if($tmr==md5($r['usr-pwd'].$xdt.$ip.$xip.$agent)){
+					if($tmr==md5($r['usr-pwd'].$ip.$xip.$agent)){
 						\SESSION::start();
 						$uid=(int) $r['usr-uid'];
 						$gid=(int) $r['usr-gid'];
@@ -172,6 +170,7 @@ public function try_to_remember($lu='',$tmr=''){
 								\SESSION::set('pid',$pid);
 							}
 						}
+						
 						//if(isset($_SERVER['REQUEST_URI'])) {$uri=$_SERVER['REQUEST_URI'];} else {$uri='./';}
 						//header('Location: '.$uri);
 						//exit;
