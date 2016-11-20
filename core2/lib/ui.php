@@ -85,4 +85,17 @@ class UI {
         
     }
 
+    public function menu(){
+        // load menus from DB
+        $menu = CORE\WIDGETS\MENU::get_menu_from_db(); // ? load from DB?
+        // put each menu to the specific template position
+        foreach ($menu as $menu_name => $items) {
+            foreach ($items as $index => $item) {
+                $this->p($item,'menu_'.$menu_name);
+            }
+        }
+    }
+
+
+
 }

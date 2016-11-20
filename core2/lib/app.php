@@ -42,6 +42,7 @@ class APP {
             - check access (acl, check mode 2 for admin only)
             - load module (mvc)
         */
+        $UI->menu();
         $APP->stop();
         $UI->render();
     }
