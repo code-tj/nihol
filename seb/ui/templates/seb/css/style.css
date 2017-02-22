@@ -1,0 +1,108 @@
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {
+  padding:0px;
+  /* Margin bottom by footer height */
+  margin-bottom: 50px;
+}
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 49px;
+  border-top:1px solid #eee;
+  background-color: #f5f5f5;
+  padding-top:14px;
+}
+/* nav styling */
+.navbar-blue {
+    background-color: #003478;
+    border-color: #002350;
+}
+.navbar-blue .navbar-brand {
+    color: #EEE;
+}
+.navbar-blue .navbar-brand:hover,
+.navbar-blue .navbar-brand:focus {
+    color: #FFF;
+}
+.navbar-blue .navbar-nav > li > a {
+    color: #EEE;
+}
+.navbar-blue .navbar-nav > li > a:hover,
+.navbar-blue .navbar-nav > li > a:focus {
+    color: #EEE;
+    background-color:#002a60;
+}
+.navbar-blue .navbar-nav > .active > a, 
+.navbar-blue .navbar-nav > .active > a:hover, 
+.navbar-blue .navbar-nav > .active > a:focus {
+    color: #EEE;
+    background-color: #002454;
+}
+.navbar-blue .navbar-nav > .active2 > a {
+    border-right:1px solid #002a60;
+}
+.navbar-blue .navbar-nav > .open > a, 
+.navbar-blue .navbar-nav > .open > a:hover, 
+.navbar-blue .navbar-nav > .open > a:focus {
+    color: #EEE;
+    background-color: #002454;
+}
+.navbar-blue .navbar-nav > .dropdown > a .caret {
+    border-top-color: #EEE;
+    border-bottom-color: #EEE;
+}
+.navbar-blue .navbar-nav > .dropdown > a:hover .caret,
+.navbar-blue .navbar-nav > .dropdown > a:focus .caret {
+    border-top-color: #EEE;
+    border-bottom-color: #EEE;
+}
+.navbar-blue .navbar-nav > .open > a .caret, 
+.navbar-blue .navbar-nav > .open > a:hover .caret, 
+.navbar-blue .navbar-nav > .open > a:focus .caret {
+    border-top-color: #002454;
+    border-bottom-color: #002454;
+}
+.navbar-blue .navbar-toggle {
+    border-color: #002454;
+}
+.navbar-blue .navbar-toggle:hover,
+.navbar-blue .navbar-toggle:focus {
+    background-color: #002454;
+}
+.navbar-blue .navbar-toggle .icon-bar {
+    background-color: #EEE;
+}
+@media (max-width: 767px) {
+    .navbar-blue .navbar-nav .open .dropdown-menu > li > a {
+        color: #EEE;
+    }
+    .navbar-blue .navbar-nav .open .dropdown-menu > li > a:hover,
+    .navbar-blue .navbar-nav .open .dropdown-menu > li > a:focus {
+        color: #002454;
+    }
+}
+/* end nav styling */
+
+#xcontent {
+    padding-top:64px;
+}
+.jumbotron {
+    background-image: url("../../../img/jumbotron_bg.png");
+    background-size: cover;
+    color:white;
+    text-shadow: 2px 2px 3px rgba(0, 0, 0, 1);
+}
+.item_status0 {
+    color:silver;
+}
+.nav-stacked {
+  border-radius:4px;
+  border: 1px solid #efefef;
+  box-shadow: 5px 5px 10px 0px rgba(204,204,204,1);
+  margin-bottom:20px;
+}
