@@ -1,62 +1,67 @@
 <?php
-class DB
+class db
 {
-	private $connected = false;
-	private $conf=array();
-	private $h = null; // db handle
+    private $connected = false;
+    private $config=array();
+    private $log=null;
+    private $h = null; // db handle
 
-	public static function init()
+    function __construct($config=array(),$log)
     {
-        static $inst=null;
-        if($inst===null) {$inst = new DB();}
-        return $inst;
+        $this->config=$config;
+        $this->log=$log;
     }
 
-    private function __construct(){}
-
-	public function conf($conf)
-	{
-		$this->conf=$conf;
-	}
-
-    public function connect()
+    private function config_ok()
     {
-    	try {
-            $dsn='mysql:host='.$this->conf['db_server'].';dbname='.$this->conf['db_name'];
-            $opt=array(
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-            );
-            $this->h = new PDO($dsn,$this->conf['db_user'],$this->conf['db_pass'],$opt);
-            $this->h->query('SET NAMES '.$this->conf['db_charset']);
-            $this->connected=true;
-            LOG::msg('debug','[db]: connected to db');
-            $this->conf=array();
-        } catch(PDOException $e) {
-            LOG::msg('err','something wrong with DB connection');
-            LOG::msg('debug','[db]: '.$e->getMessage());
+        if(count($this->config)>0) {
+            // here we need put more to check configuration parameters
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private function connect($log)
+    {
+        if($this->config_ok()){
+            try {
+                $dsn='mysql:host='.$this->config['db_server'].';dbname='.$this->config['db_name'];
+                $opt=array(
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+                );
+                $this->h = new PDO($dsn,$this->config['db_user'],$this->config['db_pass'],$opt);
+                $this->h->query('SET NAMES '.$this->config['db_charset']);
+                $this->connected=true;
+                //$log->msg('debug','[db]: connected to db');
+                $this->config=array();
+            } catch(PDOException $e) {
+                $log->msg('err','something wrong with DB connection');
+                $log->msg('debug','[db]: '.$e->getMessage());
+            }
+        } else {
+            $log->msg('err','db config error');
         }
     }
 
     public function ok()
     {
-    	if(!$this->connected) {$this->connect();}
+    	if(!$this->connected) $this->connect($this->log);
     	return $this->connected;
     }
 
-    public function close()
+    private function close()
     {
     	if($this->connected && $this->h!=null)
     	{
 	        $this->h=null;
 	        $this->connected=false;
-            LOG::msg('debug','[db]: connection closed');
 	    }
     }
 
     function __destruct()
     {
-    	// close connection
     	if($this->connected) $this->close();
     }
 

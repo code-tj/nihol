@@ -1,7 +1,8 @@
 <?php
-class UI
+class ui
 {
-    private $conf=array();
+    private $config=array();
+    private $log=null;
     private $p=array(
         'meta'=>'',
         'link'=>'',
@@ -10,18 +11,10 @@ class UI
         'main'=>''
         );
 
-    public static function init()
+    function __construct($config=array(),$log)
     {
-        static $inst=null;
-        if($inst===null) {$inst = new UI();}
-        return $inst;
-    }
-
-    private function __construct(){}	
-
-    public function conf($conf)
-    {
-        $this->conf=$conf;
+        $this->config=$config;
+        $this->log=$log;
     }
 
     public function p($content,$block='main'){
@@ -35,9 +28,9 @@ class UI
     public function render()
     {
         $output='';
-        if(is_readable($this->conf['ui_tpl']))
+        if(isset($this->config['ui_tpl']) && is_readable($this->config['ui_tpl']))
         {
-            $output = file_get_contents($this->conf['ui_tpl']);
+            $output = file_get_contents($this->config['ui_tpl']);
             foreach($this->p as $key => $content)
             {
                 $tag="<!--@$key-->";

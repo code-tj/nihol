@@ -1,23 +1,23 @@
 <?php
-class LOG
+class log
 {
-    public static function init()
+    private $logs=array(); // 'debug',err','info','user'
+
+    public function msg($type,$msg)
     {
-        static $inst=null;
-        if($inst===null) {$inst = new DB();}
-        return $inst;
+        if(isset($this->logs[$type]))
+        {
+            $this->logs[$type].=$msg;
+        } else {
+            $this->logs[$type]=$msg;
+        }
     }
 
-    private function __construct(){}
-
-    public static function msg()
+    public function get($type)
     {
-
-    }
-
-    public static function show()
-    {
-
+        $data='';
+        if(isset($this->logs[$type])) $data=$this->logs[$type];
+        return $data;
     }
 
 }
