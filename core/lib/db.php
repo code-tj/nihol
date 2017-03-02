@@ -3,26 +3,30 @@ class db
 {
     private $connected = false;
     private $config=array();
-    private $log=null;
     private $h = null; // db handle
 
-    function __construct($config=array(),$log)
+    function __construct($config)
     {
         $this->config=$config;
-        $this->log=$log;
     }
 
     private function config_ok()
     {
+        $check=false;
         if(count($this->config)>0) {
-            // here we need put more to check configuration parameters
-            return true;
-        } else {
-            return false;
+            if(isset($this->config['db_server']) && 
+                isset($this->config['db_name']) && 
+                isset($this->config['db_user']) && 
+                isset($this->config['db_pass']) && 
+                isset($this->config['db_charset']))
+            {
+                $check=true;
+            }
         }
+        return $check;
     }
 
-    private function connect($log)
+    private function connect()
     {
         if($this->config_ok()){
             try {
@@ -34,35 +38,37 @@ class db
                 $this->h = new PDO($dsn,$this->config['db_user'],$this->config['db_pass'],$opt);
                 $this->h->query('SET NAMES '.$this->config['db_charset']);
                 $this->connected=true;
-                //$log->msg('debug','[db]: connected to db');
                 $this->config=array();
             } catch(PDOException $e) {
-                $log->msg('err','something wrong with DB connection');
-                $log->msg('debug','[db]: '.$e->getMessage());
+                app::log('err','Something wrong with DB connection');
+                app::log('debug','[db]: '.$e->getMessage());
             }
         } else {
-            $log->msg('err','db config error');
+            app::log('err','db config error');
         }
     }
 
     public function ok()
     {
-    	if(!$this->connected) $this->connect($this->log);
+    	if(!$this->connected) $this->connect();
+        //if($this->connected) app::log('debug','[db]: connected');
     	return $this->connected;
     }
 
-    private function close()
+    public function close()
     {
     	if($this->connected && $this->h!=null)
     	{
 	        $this->h=null;
 	        $this->connected=false;
+            //app::log('debug','[db]: closed');
 	    }
     }
-
+/*
+// not need here, because: app->stop() do this
     function __destruct()
     {
     	if($this->connected) $this->close();
     }
-
+*/
 }

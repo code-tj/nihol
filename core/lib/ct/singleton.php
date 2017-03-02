@@ -1,7 +1,7 @@
 <?php
-class SINGLETON
+class singleton
 {
-    protected static $inst = null;
+    protected static $inst=null;
     
     protected function __construct(){}
     protected function __clone(){}
