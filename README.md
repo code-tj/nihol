@@ -1,2 +1,2 @@
 # Nihol
-micro-framework (php)
+Micro-framework for web applications by IceCool (code.tj team).

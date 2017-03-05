@@ -4,53 +4,67 @@ class user
     private $uid=0;
     private $gids=array(0);
     private $name=''; // guest
+    private $sid=''; // session_id
     public $app=null;
 
     function __construct()
     {
     	$this->app=app::init();
-        $this->app->session = new session();
-        $this->initialize();
-    }
-
-    private function initialize()
-    {
-        if($this->app->session->started())
-        {
-            $ses_uid=(int) $this->app->session->get('uid');
-            $ses_gids=$this->app->session->get('gids');
+        if(isset($_COOKIE['PHPSESSID'])){
+            session_start();            
+            $this->sid=session_id();
+            //app::log('debug','session started');
+            $ses_uid=(int) $this->session_get('uid');
+            $ses_gids=$this->session_get('gids');
             if($ses_uid>0 && count($ses_gids)>0)
             {
                 $this->uid=$ses_uid;
                 $this->gids=$ses_gids;
             }
         }
-        //app::log('debug','uid='.$this->uid().', gid='.$this->gid().', gids='.print_r($this->gids(),true));
+        //app::log('debug','uid='.$this->get('uid').', gid='.$this->get('gid').', gids='.print_r($this->get('gids'),true));
     }
 
-    public function uid()
+    public function get($key)
     {
-        return $this->uid;
+        if($key=='uid') return $this->uid;
+        if($key=='gid') return $this->gids[0];
+        if($key=='gids') return $this->gids;
+        if($key=='name') return $this->name;
     }
 
-    public function gid()
+    public function session_set($key,$val)
     {
-        return $this->gids[0];
+        $_SESSION[AL.'_'.$key]=$val;
     }
 
-    public function gids()
+    public function session_get($key)
     {
-        return $this->gids;
+        if(isset($_SESSION[AL.'_'.$key]))
+        {
+            return $_SESSION[AL.'_'.$key];
+        } else {
+            return '';
+        }
     }
 
-    public function name()
+    public function session_remove($key)
     {
-        return $this->name;
+        if(isset($_SESSION[AL.'_'.$key])) unset($_SESSION[AL.'_'.$key]);
+    }
+
+    public function session_remove_all()
+    {
+        $len=strlen(AL);
+        foreach($_SESSION as $key=>$val)
+        {
+            if(substr($key,0,$len)==AL) { unset($_SESSION[$key]); }
+        }
     }
 
     public function isGuest()
     {
-        return $this->uid > 0 ? true : false;
+        return $this->uid > 0 ? false : true;
     }
     
 }

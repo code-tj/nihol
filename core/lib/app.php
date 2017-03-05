@@ -6,10 +6,9 @@ class app
 	private $cfg=array(); // configuration
 	private $log=array(); // 'debug',err','info','user'
 	public $db = null;
-	public $user=null;
-	public $session=null;
-	public $ui=null;
-	private $modules=array();
+	public $user=null;	
+	public $ui=null;	
+	//public $modules=array();
     
     protected function __construct(){}
     protected function __clone(){}
@@ -78,16 +77,31 @@ class app
    		return $this->db->ok();
     }
 
-	public function set_module()
+	public function set_module($c='',$act='')
 	{
-		// ??
-		$module = new module();
-		$module_name=$module->get('name');
-		if($module_name!='')
-		{
-			//if(!isset($this->modules[$module_name])) $this->modules[$module_name]=$module;
-			$this->modules[$module_name]=$module; // overwrite existing
-		}
+		if($c=='' && $act=='')
+        {
+            if(isset($_GET['c']))
+            {
+                $c=$_GET['c'];
+                if($c!='' && isset($_GET['act'])) { $act=$_GET['act']; }
+            } else {
+            	$c='p'; // for some static pages
+            }
+        }
+        if(\app::regex($c) && (\app::regex($act)) || $act=='')
+        {
+            $cpath="\\mvc\\c\\".$c;
+            if(class_exists($cpath))
+            {
+                $controller = new $cpath();
+                $controller->initialize($c,$act);
+                $controller->action();
+                //$this->modules[$c]=$controller;
+            } else {
+            	app::log('err','Module not found');
+            }
+        }
 	}
 
 	public function get_module($name)
@@ -103,14 +117,12 @@ class app
 	public function run($config)
 	{
 		if($this->set_config($config))
-		{
+		{			
+			$this->ui = new ui($this->get_config('ui_'));
 			$this->user = new user();
 			$this->set_module();
-			$this->set_log('debug','а может впихнуть работу с сессией в класс user?');
-			$this->set_log('debug','сократить модуль, сделать проще и для home применить file_get_contents (но динамики не будет)?');
 			//...
-			$this->stop();
-			$this->ui = new ui($this->get_config('ui_'));
+			$this->stop();			
 			$this->ui->render();
 		}			
 	}

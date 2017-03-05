@@ -49,6 +49,7 @@ class ui
         if(isset($this->config['ui_tpl']) && is_readable($this->config['ui_tpl']))
         {
             $this->menu();
+            //app::log('debug',print_r(get_included_files(),true));
             // system log messages
             $err=$app->get_log('err');
             $info=$app->get_log('info');
@@ -78,8 +79,7 @@ class ui
                 $this->set($debug,'msg');
             }
             // rendering to template
-            $output = file_get_contents($this->config['ui_tpl']);
-            $this->set('<pre>'.print_r(get_included_files(),true).'</pre>');
+            $output = file_get_contents($this->config['ui_tpl']);            
             foreach($this->blocks as $alias => $content)
             {
                 $tag="<!--@$alias-->";

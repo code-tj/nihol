@@ -1,20 +1,6 @@
 #################
-## Eclipse
+## CODE.TJ
 #################
-
-*.pydevproject
-.project
-.metadata
-bin/
-tmp/
-*.tmp
-*.bak
-*.swp
-*~.nib
-local.properties
-.classpath
-.settings/
-.loadpath
 
 .idea
 *.*~
@@ -29,4 +15,5 @@ ehthumbs.db
 
 ## app config
 
+*config.php
 *conf.php
