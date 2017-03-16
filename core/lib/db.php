@@ -3,7 +3,7 @@ class db
 {
     private $connected = false;
     private $config=array();
-    private $h = null; // db handle
+    public $h = null; // db handle
 
     function __construct($config)
     {
@@ -38,6 +38,7 @@ class db
                 $this->h = new PDO($dsn,$this->config['db_user'],$this->config['db_pass'],$opt);
                 $this->h->query('SET NAMES '.$this->config['db_charset']);
                 $this->connected=true;
+                app::log('debug','[db]: connected');
                 $this->config=array();
             } catch(PDOException $e) {
                 app::log('err','Something wrong with DB connection');
@@ -71,4 +72,15 @@ class db
     	if($this->connected) $this->close();
     }
 */
+    public function get($sql,$opt)
+    {
+        $records=array();
+        $sth=$this->h->prepare($sql);
+        $sth->execute($opt);
+        ///$this->query_count();
+        if($sth->rowCount()>0){
+            ///$r=$sth->fetch()
+        }
+        return $records;
+    }
 }

@@ -5,7 +5,7 @@ class p extends \mvc\controller
 
     public function action()
     {
-        $this->app->ui->set($this->static_page($this->action));
+        \app::init()->ui->set($this->static_page($this->action));
     }
 
     public function static_page($alias)
@@ -13,7 +13,7 @@ class p extends \mvc\controller
         $result='';
         if($alias=='')
         {
-            if($this->app->user->isGuest())
+            if(\app::init()->user->isGuest())
             {
                 $alias='guest';
             } else {
@@ -21,12 +21,12 @@ class p extends \mvc\controller
             }
         }
         // defining file path
-        $path='./app/pages/'.$alias.'.html';
+        $path='./app/pages/'.$alias.'.php';
         if(is_readable($path))
         {
             $result=file_get_contents($path);
         } else {
-            $this->app::log('err','Page not found'); // needs translation
+            \app::log('err','Page not found'); // needs translation
         }
         return $result;
     }

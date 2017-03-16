@@ -1,20 +1,20 @@
 <?php
 class app
 {
-	protected static $inst=null;
+	protected static $inst=null; // singlton
 
-	private $cfg=array(); // configuration
+	private $config=array();
 	private $log=array(); // 'debug',err','info','user'
-	public $db = null;
+	public $db=null;
 	public $user=null;	
 	public $ui=null;	
-	//public $modules=array();
+	public $controllers=array();
     
     protected function __construct(){}
     protected function __clone(){}
 
     public static function init()
-    {
+    {   // реализация патерна синглтон (чтобы вызывать единственный объект из разных частей кода)
         if(!isset(static::$inst)) { static::$inst = new static; }
         return static::$inst;
     }
@@ -23,7 +23,7 @@ class app
     {
     	if(is_readable($config)){
 			require $config;
-			$this->cfg=$cfg;
+			$this->config=$cfg; // $cfg - массив конфигураций
 			return true;
 		} else {
 			echo 'config not found';
@@ -31,17 +31,24 @@ class app
 		}	
     }
 
-	private function get_config($prefix)
+	private function get_config($prefix='')
 	{
-		$cfg=array();
-		$len=strlen($prefix);
-		foreach ($this->cfg as $k => $v) {
-			if(substr($k,0,$len)==$prefix) {
-				$cfg[$k]=$v;
-				$this->cfg[$k]='';
-			}
-		}
-		return $cfg;
+		$config=array();
+        if($prefix!='')
+        {
+            $len=strlen($prefix);
+            foreach ($this->config as $key => $val)
+            {
+                if(substr($key,0,$len)==$prefix)
+                {
+                    $config[$key]=$val;
+                    $this->config[$key]=''; // очищаем после получения
+                }
+            }
+        } else {
+
+        }		
+		return $config;
 	}
 
 	public function set_log($cat,$msg)
@@ -77,7 +84,7 @@ class app
    		return $this->db->ok();
     }
 
-	public function set_module($c='',$act='')
+	public function load_controller($c='',$act='')
 	{
 		if($c=='' && $act=='')
         {
@@ -86,32 +93,37 @@ class app
                 $c=$_GET['c'];
                 if($c!='' && isset($_GET['act'])) { $act=$_GET['act']; }
             } else {
-            	$c='p'; // for some static pages
+            	$c='p'; // default controller name
             }
         }
-        if(\app::regex($c) && (\app::regex($act)) || $act=='')
+        if(\app::regex($c) && (\app::regex($act) || $act==''))
         {
-            $cpath="\\mvc\\c\\".$c;
-            if(class_exists($cpath))
+            $c_path="\\mvc\\c\\".$c;
+            if(class_exists($c_path))
             {
-                $controller = new $cpath();
-                $controller->initialize($c,$act);
-                $controller->action();
-                //$this->modules[$c]=$controller;
+                if($this->user->ac($c,$act))
+                {
+                    $controller = new $c_path();
+                    $controller->load($c,$act);
+                    $controller->action();
+                    $this->controllers[$c]=$controller;
+                } else {
+                    app::log('err','Access denied');
+                }                
             } else {
-            	app::log('err','Module not found');
+            	app::log('err','Controller not found');
             }
         }
 	}
 
-	public function get_module($name)
+	public function get_controller($name)
 	{
-		if(isset($this->modules[$name])){return $this->modules[$name];} else {return null;}
+		if(isset($this->controllers[$name])){return $this->controllers[$name];} else {return null;}
 	}
 
 	public function stop()
 	{
-		if($this->db!=null){$this->db->close();}
+		if($this->db!=null){$this->db->close();} // close db connection if needed
 	}
 
 	public function run($config)
@@ -120,9 +132,8 @@ class app
 		{			
 			$this->ui = new ui($this->get_config('ui_'));
 			$this->user = new user();
-			$this->set_module();
-			//...
-			$this->stop();			
+			$this->load_controller();
+			$this->stop();
 			$this->ui->render();
 		}			
 	}

@@ -66,5 +66,13 @@ class user
     {
         return $this->uid > 0 ? false : true;
     }
+
+    public function ac($c,$act)
+    {
+        $granted=true;
+        // access control check
+        // ...
+        return $granted;
+    }
     
 }
