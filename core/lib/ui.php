@@ -42,20 +42,17 @@ class ui
         }
     }
 
-    public function render()
+    public function render($app)
     {
-        $output='';
-        $app=app::init();
+        $result='';
         if(isset($this->config['ui_tpl']) && is_readable($this->config['ui_tpl']))
         {
             $this->menu();
-            //app::log('debug',print_r(get_included_files(),true));
-            // system log messages
+            //$app->log('debug',print_r(get_included_files(),true));
             $err=$app->get_log('err');
             $info=$app->get_log('info');
             $debug=$app->get_log('debug');
-
-            if($err!='') 
+            if($err!='')
             {
                 $err='<div class="alert alert-danger alert-dismissible fade in" role="alert">
 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -64,7 +61,7 @@ class ui
 </div>';
                 $this->set($err,'msg');
             }
-            if($info!='') 
+            if($info!='')
             {
                 $info='<div class="alert alert-info alert-dismissible fade in" role="alert">
 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -73,22 +70,22 @@ class ui
 </div>';
                 $this->set($info,'msg');
             }
-            if($debug!='') 
+            if($debug!='')
             {
                 $debug='<pre>'.htmlspecialchars($debug).'</pre>';
                 $this->set($debug,'msg');
             }
-            // rendering to template
-            $output = file_get_contents($this->config['ui_tpl']);            
+            // render template
+            $result = file_get_contents($this->config['ui_tpl']);
             foreach($this->blocks as $alias => $content)
             {
                 $tag="<!--@$alias-->";
-                $output=str_replace($tag,$content,$output);
+                $result=str_replace($tag,$content,$result);
             }
         } else {
             echo 'template not found';
         }
-        echo $output;
+        echo $result;
     }
 
 }

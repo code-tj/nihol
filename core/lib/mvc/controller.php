@@ -1,29 +1,16 @@
 <?php
 namespace mvc;
 
-abstract class model
-{
-
-}
-
-abstract class view
-{
-    
-}
-
-abstract class controller
+class controller
 {
     protected $name='';
     protected $action='';
     public $model=null;
     public $view=null;
-    public $data='';
 
-    public function load($c,$act)
+    public function getName()
     {
-        $this->name=$c;
-        $this->action=$act;
+      return $this->name;
     }
 
-    abstract function action();
 }

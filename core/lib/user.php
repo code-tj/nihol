@@ -2,25 +2,30 @@
 class user
 {
     private $uid=0;
+    private $gid=0; // primary gid
     private $gids=array(0);
     private $name=''; // guest
-    private $sid=''; // session_id
-    public $app=null;
+    //private $sid=''; // session_id
+    //private $log=null;
 
     function __construct()
     {
-    	$this->app=app::init();
+    	//$this->app=app::init();
         if(isset($_COOKIE['PHPSESSID'])){
-            session_start();            
-            $this->sid=session_id();
+            session_start();
+            //$this->sid=session_id();
             //app::log('debug','session started');
-            $ses_uid=(int) $this->session_get('uid');
-            $ses_gids=$this->session_get('gids');
+            $uid=(int) $this->session_get('uid');
+            $gids=$this->session_get('gids');
             if($ses_uid>0 && count($ses_gids)>0)
             {
-                $this->uid=$ses_uid;
-                $this->gids=$ses_gids;
+                $this->uid=$uid;
+                $this->gids=$gids;
+                $this->gid=(int) $gids[0];
             }
+        } else {
+          // check special cookie flag if user remembered
+
         }
         //app::log('debug','uid='.$this->get('uid').', gid='.$this->get('gid').', gids='.print_r($this->get('gids'),true));
     }
@@ -28,7 +33,7 @@ class user
     public function get($key)
     {
         if($key=='uid') return $this->uid;
-        if($key=='gid') return $this->gids[0];
+        if($key=='gid') return $this->gid;
         if($key=='gids') return $this->gids;
         if($key=='name') return $this->name;
     }
@@ -69,10 +74,11 @@ class user
 
     public function ac($c,$act)
     {
-        $granted=true;
-        // access control check
-        // ...
-        return $granted;
+      // access control
+      $granted=true; // by default false
+      // check ... should be completed!
+
+      return $granted;
     }
-    
+
 }

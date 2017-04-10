@@ -1,11 +1,11 @@
 <?php
 namespace mvc\c;
-class p extends \mvc\controller
+class home_c extends \mvc\controller
 {
 
     public function action()
     {
-        \app::init()->ui->set($this->static_page($this->action));
+        //\app::init()->ui->set($this->static_page($this->action));
     }
 
     public function static_page($alias)
@@ -21,7 +21,7 @@ class p extends \mvc\controller
             }
         }
         // defining file path
-        $path='./app/pages/'.$alias.'.php';
+        $path=APP.'pages/'.$alias.'.php';
         if(is_readable($path))
         {
             $result=file_get_contents($path);
