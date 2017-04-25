@@ -17,7 +17,7 @@ class user
             //app::log('debug','session started');
             $uid=(int) $this->session_get('uid');
             $gids=$this->session_get('gids');
-            if($ses_uid>0 && count($ses_gids)>0)
+            if($uid>0 && count($gids)>0)
             {
                 $this->uid=$uid;
                 $this->gids=$gids;

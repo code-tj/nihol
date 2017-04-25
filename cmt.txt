@@ -1,0 +1,97 @@
+1. Имена констант пишутся заглавными буквами.
+2. Имена методов пишутся строчными латинскими буквами, в качестве разделителя используется знак нижнего подчеркивания.
+
+/*
+
+	public function set_data($content,$alias='main'){
+			if(isset($this->data[$alias])){
+					$this->data[$alias].=$content;
+			} else {
+					$this->data[$alias]=$content;
+			}
+	}
+
+
+	private function get_config($prefix='')
+	{
+		$config=array();
+		if($prefix!='')
+		{
+			$len=strlen($prefix);
+			foreach ($this->config as $key => $val)
+			{
+				if(substr($key,0,$len)==$prefix)
+				{
+					$config[$key]=$val;
+					$this->config[$key]=''; // clean
+				}
+			}
+		}
+		return $config;
+	}
+
+	private function set_log($cat,$msg)
+	{
+		if(isset($this->log[$cat]))
+		{
+		    $this->log[$cat].=$msg.PHP_EOL;
+		} else {
+		    $this->log[$cat]=$msg.PHP_EOL;
+		}
+	}
+
+  public function get_log($cat)
+  {
+		$log='';
+		if(isset($this->log[$cat])) $log=$this->log[$cat];
+		return $log;
+  }
+
+	public function log1($cat,$msg)
+  {
+		$this->set_log($cat,$msg);
+  }
+
+
+
+  public function db()
+  {
+  	if($this->db===null){$this->db = new db($this->get_config('db_'));}
+ 		return $this->db->ok();
+  }
+
+	private function load_module($c='',$act='')
+	{
+		if($c=='' && $act=='')
+    {
+        if(isset($_GET['c']))
+        {
+          $c=$_GET['c'];
+          if($c!='' && isset($_GET['act'])) { $act=$_GET['act']; }
+        } else {
+        	$c='home'; // default controller name
+        }
+    }
+    if($this::regex($c) && ($this::regex($act) || $act==''))
+    {
+        $path="\\mvc\\c\\".$c.'_c';
+        if(class_exists($path))
+        {
+            if($this->user->ac($c,$act))
+            {
+                $controller = new $path();
+								if($controller->get_name()!='')
+								{
+									$this->modules[$controller->get_name()]=$controller;
+								}
+                //$controller->load($c,$act);
+                //$controller->action();
+            } else {
+                $this->log('err','Access denied');
+            }
+        } else {
+      		$this->log('err','Controller not found');
+        }
+    }
+	}
+*/

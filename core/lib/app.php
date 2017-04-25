@@ -1,126 +1,87 @@
 <?php
 class app
 {
+	protected static $inst=null;
 	private $config=array();
-	private $log=array(); // 'debug',err','info','user' /// ?
 	public $db=null;
+	public $log=null;
+	public $data=null;
 	public $user=null;
-	//public $modules=array();
+	public $modules=array();
 
-	private function load_config($config_path)
+	public static function init()
 	{
-		if(is_readable($config_path)){
-			require $config_path;
-			$this->config=$cfg; // cfg - config array
+			if(!isset(static::$inst)) { static::$inst = new static; }
+			return static::$inst;
+	}
+
+	protected function __construct(){}
+	protected function __clone(){}
+
+	private function load_config($path)
+	{
+		if(is_readable($path))
+		{
+			require $path;
+			$this->config=$cfg;
 		} else {
-			echo 'config not found';
-			exit;
+			echo 'config not found'; exit;
 		}
 	}
 
-	private function get_config($prefix='')
+	public function cfg($prefix='')
 	{
 		$config=array();
 		if($prefix!='')
 		{
+			$prefix.='_';
 			$len=strlen($prefix);
 			foreach ($this->config as $key => $val)
 			{
 				if(substr($key,0,$len)==$prefix)
 				{
 					$config[$key]=$val;
-					$this->config[$key]=''; // clean
+					$this->config[$key]=''; // clean!
 				}
 			}
 		}
 		return $config;
 	}
 
-	private function set_log($cat,$msg)
-	{
-		if(isset($this->log[$cat]))
-		{
-		    $this->log[$cat].=$msg.PHP_EOL;
-		} else {
-		    $this->log[$cat]=$msg.PHP_EOL;
-		}
-	}
-
-  public function get_log($cat)
-  {
-		$log='';
-		if(isset($this->log[$cat])) $log=$this->log[$cat];
-		return $log;
-  }
-
-	public function log($cat,$msg)
-  {
-		$this->set_log($cat,$msg);
-  }
-
 	public static function regex($s,$regex='/^[a-zA-Z0-9_]+$/')
 	{
 		if(preg_match($regex,$s)){return true;} else {return false;}
 	}
 
-  public function db()
-  {
-  	if($this->db===null){$this->db = new db($this->get_config('db_'));}
- 		return $this->db->ok();
-  }
-
-	private function load_module($c='',$act='')
+	private function load_module()
 	{
-		if($c=='' && $act=='')
-    {
-        if(isset($_GET['c']))
-        {
-          $c=$_GET['c'];
-          if($c!='' && isset($_GET['act'])) { $act=$_GET['act']; }
-        } else {
-        	$c='home'; // default
-        }
-    }
-    if($this::regex($c) && ($this::regex($act) || $act==''))
-    {
-        $path="\\mvc\\c\\".$c.'_c';
-        if(class_exists($path))
-        {
-            if($this->user->ac($c,$act))
-            {
-                $controller = new $path();
-								/*
-								if($controller->get_name()!='')
-								{
-									$this->modules[$controller->get_name()]=$controller;
-								}
-								*/
-                //$controller->load($c,$act);
-                //$controller->action();
-            } else {
-                $this->log('err','Access denied');
-            }
-        } else {
-      		$this->log('err','Controller not found');
-        }
-    }
+		$module = new module();
+		if($module->name()!=''){$this->modules[$module->name()]=$module;}
 	}
+
+	// ...
 
 	public function stop()
 	{
-		if($this->db!=null){$this->db->close();} // close db connection if needed
+		if($this->db!=null){$this->db->close();}
 	}
 
 	public function run($config_path)
 	{
+		// load config
 		$this->load_config($config_path);
+		// load logger for app messages
+		$this->log = new log();
+		// app data (store output data)
+		$this->data = new data();
+		// load user object to define current user
 		$this->user = new user();
+		// loading app modules
 		$this->load_module();
+		// ui initialization
+		$this->ui = new ui($this->cfg('ui'));
+		// rendering results
+		$this->ui->render();
 		$this->stop();
-		$this->ui = new ui($this->get_config('ui_'));
-		$this->ui->render($this);
 	}
-
-
-// end class: app
-}
+} // end class: app
