@@ -12,7 +12,7 @@ class user_v
 
 <div class="col-md-3">
 <form id="LoginForm" action="./?c=user&act=login" method="post">
-  <div class="input-group" style="margin-bottom:20px;">
+  <div class="input-group" style="margin-top:20px;margin-bottom:20px;">
       <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i>
       </span>
       <input type="text" class="form-control" id="n_username" name="n_username" value="" placeholder="username" style="font-size:120%;">

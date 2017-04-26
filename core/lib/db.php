@@ -14,10 +14,10 @@ class db
     {
         $check=false;
         if(count($this->config)>0) {
-            if(isset($this->config['db_server']) && 
-                isset($this->config['db_name']) && 
-                isset($this->config['db_user']) && 
-                isset($this->config['db_pass']) && 
+            if(isset($this->config['db_server']) &&
+                isset($this->config['db_name']) &&
+                isset($this->config['db_user']) &&
+                isset($this->config['db_pass']) &&
                 isset($this->config['db_charset']))
             {
                 $check=true;
@@ -29,23 +29,25 @@ class db
     private function connect()
     {
         if($this->config_ok()){
+            $app=app::init();
             try {
                 $dsn='mysql:host='.$this->config['db_server'].';dbname='.$this->config['db_name'];
                 $opt=array(
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES => false,
                 );
                 $this->h = new PDO($dsn,$this->config['db_user'],$this->config['db_pass'],$opt);
                 $this->h->query('SET NAMES '.$this->config['db_charset']);
                 $this->connected=true;
-                app::log('debug','[db]: connected');
+                $app->log->set('debug','[db]: connected');
                 $this->config=array();
             } catch(PDOException $e) {
-                app::log('err','Something wrong with DB connection');
-                app::log('debug','[db]: '.$e->getMessage());
+                $app->log->set('err','Something wrong with DB connection');
+                $app->log->set('debug','[db]: '.$e->getMessage());
             }
         } else {
-            app::log('err','db config error');
+            $app->log->set('err','db config error');
         }
     }
 
@@ -83,4 +85,10 @@ class db
         }
         return $records;
     }
+
+    public function qcount()
+    {
+      
+    }
+
 }

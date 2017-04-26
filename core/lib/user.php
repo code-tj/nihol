@@ -22,6 +22,7 @@ class user
                 $this->uid=$uid;
                 $this->gids=$gids;
                 $this->gid=(int) $gids[0];
+                // username?
             }
         } else {
           // check special cookie flag if user remembered

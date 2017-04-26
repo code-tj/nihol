@@ -53,6 +53,14 @@ class app
 		if(preg_match($regex,$s)){return true;} else {return false;}
 	}
 
+	public function db()
+	{
+		$ok=false;
+		if(is_null($this->db)){$this->db = new db($this->cfg('db'));}
+		if(!is_null($this->db)){$ok = $this->db->ok();}
+		return $ok;
+	}
+
 	private function load_module()
 	{
 		$module = new module();
@@ -60,6 +68,11 @@ class app
 	}
 
 	// ...
+
+	public static function log($type,$msg)
+	{
+		app::init()->log->set($type,$msg);
+	}
 
 	public function stop()
 	{
@@ -81,6 +94,7 @@ class app
 		// ui initialization
 		$this->ui = new ui($this->cfg('ui'));
 		// rendering results
+		/////phpinfo(); exit;
 		$this->ui->render();
 		$this->stop();
 	}
