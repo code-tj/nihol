@@ -1,20 +1,7 @@
 <?php
 class ui
 {
-    private $app=null;
-    private $template_file='';
     private $menu_file='./ui/menu.php'; // ...
-
-    function __construct($config=array())
-    {
-        $this->app=app::init();
-        if(isset($config['ui_tpl'])) {$this->set_template($config['ui_tpl']);}
-    }
-
-    public function set_template($path)
-    {
-      if(is_readable($path)) $this->template_file=$path;
-    }
 
     private function menu_items($items) // желательно вынести стили в часть описания меню
     {
@@ -31,7 +18,12 @@ class ui
           $result.='</ul>
 </li>'.PHP_EOL;
         } else {
-          $result.='<li><a href="'.$items[$i]['url'].'">'.$items[$i]['label']."</a></li>".PHP_EOL;
+          if(isset($items[$i]['url']))
+          {
+            $result.='<li><a href="'.$items[$i]['url'].'">'.$items[$i]['label']."</a></li>".PHP_EOL;
+          } else {
+            $result.=$items[$i]['label'].PHP_EOL;
+          }
         }
       }
       return $result;
@@ -39,27 +31,29 @@ class ui
 
     public function load_menu()
     {
+      $app=app::init();
         if(is_readable($this->menu_file))
         {
             require $this->menu_file;
             if(isset($menu))
             {
               foreach ($menu as $name => $items) {
-                $this->app->data->set('<ul class="nav navbar-nav">'.PHP_EOL,$name);
-                $this->app->data->set($this->menu_items($items),$name);
-                $this->app->data->set('</ul>'.PHP_EOL,$name);
+                $app->data('<ul class="nav navbar-nav">'.PHP_EOL,$name);
+                $app->data($this->menu_items($items),$name);
+                $app->data('</ul>'.PHP_EOL,$name);
               }
             }
         } else {
-          $this->app->log->set('debug','menu file not found');
+          $app->log('debug','menu file not found');
         }
     }
 
     public function messages()
     {
-      $err=$this->app->log->get('err');
-      $info=$this->app->log->get('info');
-      $debug=$this->app->log->get('debug');
+      $app=app::init();
+      $err=$app->log->get('err');
+      $info=$app->log->get('info');
+      $debug=$app->log->get('debug');
       if($err!='')
       {
         $err='<div class="alert alert-danger alert-dismissible fade in" role="alert">
@@ -67,7 +61,7 @@ class ui
         <span aria-hidden="true">×</span></button>
         '.htmlspecialchars($err).'
         </div>';
-        $this->app->data->set($err,'messages');
+        $app->data($err,'messages');
       }
       if($info!='')
       {
@@ -76,28 +70,86 @@ class ui
         <span aria-hidden="true">×</span></button>
         '.htmlspecialchars($info).'
         </div>';
-        $this->app->data->set($info,'messages');
+        $app->data($info,'messages');
       }
       if($debug!='')
       {
         $debug='<pre>'.htmlspecialchars($debug).'</pre>';
-        $this->app->data->set($debug,'messages');
+        $app->data($debug,'messages');
       }
     }
 
-    public function render()
+    public static function modal($title='',$body='',$btn='',$modal_id='modal1',$frm_attr='',$btn_text='Update')
+    {
+return '
+<!-- Modal -->
+<div class="modal fade" id="'.$modal_id.'" tabindex="-1" role="dialog" aria-labelledby="'.$modal_id.'_label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+    <form'.$frm_attr.'>
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="'.$modal_id.'_label">'.$title.'</h4>
+      </div>
+      <div id="'.$modal_id.'_body" class="modal-body">
+        '.$body.'
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">'.\app::t('Close').'</button>
+        <input type="submit" id="'.$modal_id.'_btn" class="btn btn-primary" value="'.\app::t($btn_text).'">
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
+<!-- /Modal -->
+';
+    }
+
+    public static function modal_trigger($modal_id='modal1',$text='Show Modal',$attr='')
+    {
+return '<button id="show_'.$modal_id.'" type="button" class="btn btn-success btn-xs" data-toggle="modal" data-target="#'.$modal_id.'"'.$attr.'>'.$text.'</button>';
+    }
+
+    public function render_breadcrumb()
     {
       $result='';
-      if($this->template_file!='')
+      $app=app::init();
+      $breadcrumb=$app->data->get_breadcrumb();
+      $count=count($breadcrumb);
+      if($count>0)
       {
-        $this->app->data->set('BWEB','title');
-        $this->app->data->set('OiT Intranet portal','brand');
+        $result.='<ol class="breadcrumb">'."\n";
+        $result.='<li><a href="./">Dashboard</a></li>'."\n";
+        for ($i=0; $i < $count; $i++) {
+          if(($i+1)==$count)
+          {
+            $result.='<li class="active">'.$breadcrumb[$i]['title'].'</li>'."\n";
+          } else {
+            $result.='<li><a href="'.$breadcrumb[$i]['link'].'">'.$breadcrumb[$i]['title'].'</a></li>'."\n";
+          }
+        }
+        $result.="</ol>\n";
+      }
+      $app->data($result,'breadcrumb');
+    }
+
+    public function render($template_file)
+    {
+      $app=app::init();
+      $result='';
+      if(is_readable($template_file))
+      {
+        $app->data('BWEB','title');
+        $app->data(BRAND,'brand');
         // render
         $this->load_menu();
-        //$this->app->log->set('debug',print_r(get_included_files(),true));
+        //$app->log('debug',print_r(get_included_files(),true));
         $this->messages();
-        $blocks=$this->app->data->get_blocks();
-        $result=file_get_contents($this->template_file);
+        $this->render_breadcrumb();
+        $blocks=$app->data->get_blocks();
+        $result=file_get_contents($template_file);
         foreach($blocks as $alias => $content)
         {
             $tag="<!--@$alias-->";
@@ -109,5 +161,9 @@ class ui
       echo $result;
     }
 
+    public function jsFile($src)
+    {
+      \app::init()->data('<script type="text/javascript" src="'.$src.'"></script>','js');
+    }
 
 }

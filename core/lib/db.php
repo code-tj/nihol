@@ -4,6 +4,7 @@ class db
     private $connected = false;
     private $config=array();
     public $h = null; // db handle
+    private $queries_counter=0;
 
     function __construct($config)
     {
@@ -40,21 +41,20 @@ class db
                 $this->h = new PDO($dsn,$this->config['db_user'],$this->config['db_pass'],$opt);
                 $this->h->query('SET NAMES '.$this->config['db_charset']);
                 $this->connected=true;
-                $app->log->set('debug','[db]: connected');
+                //$app->log('debug','[db]: connected');
                 $this->config=array();
             } catch(PDOException $e) {
-                $app->log->set('err','Something wrong with DB connection');
-                $app->log->set('debug','[db]: '.$e->getMessage());
+                $app->log('err','Something wrong with DB connection');
+                $app->log('debug','[db]: '.$e->getMessage());
             }
         } else {
-            $app->log->set('err','db config error');
+            $app->log('err','db config error');
         }
     }
 
-    public function ok()
+    public function connected()
     {
     	if(!$this->connected) $this->connect();
-        //if($this->connected) app::log('debug','[db]: connected');
     	return $this->connected;
     }
 
@@ -64,31 +64,30 @@ class db
     	{
 	        $this->h=null;
 	        $this->connected=false;
-            //app::log('debug','[db]: closed');
+            //$app->log('debug','[db]: closed');
 	    }
     }
-/*
-// not need here, because: app->stop() do this
-    function __destruct()
-    {
-    	if($this->connected) $this->close();
-    }
-*/
-    public function get($sql,$opt)
+
+    public function get($sql,$opt=array())
     {
         $records=array();
         $sth=$this->h->prepare($sql);
-        $sth->execute($opt);
-        ///$this->query_count();
+        if(count($opt)>0)
+        {
+          $sth->execute($opt);
+        } else {
+          $sth->execute();
+        }
+        $this->qcount();
         if($sth->rowCount()>0){
-            ///$r=$sth->fetch()
+            $records=$sth->fetchAll();
         }
         return $records;
     }
 
     public function qcount()
     {
-      
+      $this->queries_counter++;
     }
 
 }

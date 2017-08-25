@@ -1,2 +1,2 @@
-# Nihol
-Micro-framework for web applications by IceCool (code.tj team).
+# NIHOL
+Micro-framework for developing web applications by code.tj team.
