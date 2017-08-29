@@ -6,7 +6,6 @@ class user_c extends \controller
 
     public function action($act='')
     {
-      $app=\app::init();
       switch ($act) {
         case 'login':
           if(isset($_POST['n_username']) && isset($_POST['n_password']))
@@ -17,7 +16,7 @@ class user_c extends \controller
             $this->model->login($_POST['n_username'],$_POST['n_password'],$remember);
           } else {
             $this->view = new \mvc\v\user_v();
-            $app->data($this->view->loginForm(['title'=>BRAND,'remember'=>true,'forgot'=>true]));
+            \my::data($this->view->loginForm(['title'=>BRAND,'remember'=>true,'forgot'=>false]));
           }
           break;
 
@@ -27,20 +26,20 @@ class user_c extends \controller
           break;
 
         case 'profile':
-          if(!$app->user->isGuest())
+          if(!\my::user()->isGuest())
           {
             $this->model = new \mvc\m\profile_m();
             $this->view = new \mvc\v\profile_v();
-            $app->data($this->view->show($this->model));
+            \my::data($this->view->show($this->model));
           } else {
-            $app->log('err','You are not authorized');
+            \my::log('err','You are not authorized');
           }
           break;
 
         case 'forgot':
           $this->model = new \mvc\m\user_m();
           $this->view = new \mvc\v\user_v();
-          $app->data($this->view->iforgot_form($this->model));
+          \my::data($this->view->iforgot_form($this->model));
           break;
 
         default:

@@ -1,58 +1,48 @@
 <?php
 class app
 {
-	protected static $inst=null;
-	private $config = null;
-	public $log = null;
-	public $data = null;
-	public $db = null;
-	public $user = null;
-	public $ui = null;
-	public $module=null;
+	private $modules = array();
 
-	public static function init()
+	public function load_module($name,$opt=[])
 	{
-			if(!isset(static::$inst))
-			{
-				static::$inst = new static;
-			}
-			return static::$inst;
+		if(!isset($this->modules[$name]))
+		{
+			$this->modules[$name] = new $name($opt);
+		}
 	}
 
-	protected function __construct(){}
-	protected function __clone(){}
+	public function module($name)
+	{
+		if(isset($this->modules[$name]))
+		{
+			return $this->modules[$name];
+		} else {
+			return null;
+		}
+	}
 
 	public function log($type,$msg)
 	{
-		$this->log->set($type,$msg);
+		$this->modules['log']->set($type,$msg);
 	}
 
-	public function data($content='',$block='main')
+	public function data($content,$block='main')
 	{
-			$this->data->set($content,$block);
+		$this->modules['appdata']->set($content,$block);
 	}
 
-	public static function regex($s,$regex='/^[a-zA-Z0-9_]+$/')
+	public function t($str) // it's for translation (for the future)
 	{
-		if(preg_match($regex,$s)){return true;} else {return false;}
+		return $str;
 	}
 
-	public function db()
+	private function stop()
 	{
-		$connected=false;
-		if(is_null($this->db)){
-			$this->db = new db($this->config->get_array('db'));
-			$connected=$this->db->connected();
-		} else {
-			$connected=$this->db->connected();
-		}
-		return $connected;
+		//print_r(get_included_files());
+		///if(!is_null($this->db)){$this->db->close();}
 	}
 
-	public static function t($text)
-	{
-		return $text;
-	}
+/*
 
 	public function json($output=array())
 	{
@@ -61,21 +51,18 @@ class app
 		exit;
 	}
 
-	public function stop()
-	{
-		if(!is_null($this->db)){$this->db->close();}
-	}
+*/
 
 	public function run($config_path)
 	{
-		$this->config = new config();
-		$this->config->load($config_path);
-		$this->log = new log();
-		$this->data = new appdata();
-		$this->user = new user();
-		$this->ui = new ui();
-		$this->module = new module();
-		$this->ui->render($this->config->get('ui_tpl'));
+		$this->load_module('cfg',['path'=>$config_path]);
+		$this->load_module('log');
+		$this->load_module('db',$this->module('cfg')->gets('db',true));
+		$this->load_module('appdata');
+		$this->load_module('user');
+		$this->load_module('ui',$this->module('cfg')->gets('ui'));
+		$this->load_module('mvc');
+		$this->module('ui')->render();
 		$this->stop();
 	}
 } // end class: app

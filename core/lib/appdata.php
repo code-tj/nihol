@@ -2,6 +2,7 @@
 // app->data (output data store, buffer)
 class appdata
 {
+
   private $blocks=array(
     'meta'=>'',
     'link'=>'',

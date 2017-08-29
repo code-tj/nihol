@@ -30,7 +30,6 @@ class db
     private function connect()
     {
         if($this->config_ok()){
-            $app=app::init();
             try {
                 $dsn='mysql:host='.$this->config['db_server'].';dbname='.$this->config['db_name'];
                 $opt=array(
@@ -44,11 +43,11 @@ class db
                 //$app->log('debug','[db]: connected');
                 $this->config=array();
             } catch(PDOException $e) {
-                $app->log('err','Something wrong with DB connection');
-                $app->log('debug','[db]: '.$e->getMessage());
+                my::log('err','Something wrong with DB connection');
+                my::log('debug','[db]: '.$e->getMessage());
             }
         } else {
-            $app->log('err','db config error');
+            my::log('err','db config error');
         }
     }
 
@@ -64,7 +63,7 @@ class db
     	{
 	        $this->h=null;
 	        $this->connected=false;
-            //$app->log('debug','[db]: closed');
+          //my::log('debug','[db]: closed');
 	    }
     }
 

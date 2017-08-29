@@ -2,6 +2,22 @@
 class ui
 {
     private $menu_file='./ui/menu.php'; // ...
+    private $template_path='';
+    private $app=null;
+
+    function __construct($opt=array())
+    {
+      $this->app = my::app();
+      $this->user = $this->app->module('user');
+      if(isset($opt['ui_template']))
+      {
+        if(is_readable($opt['ui_template']))
+        {
+          $this->template_path=$opt['ui_template'];
+        }
+      }
+
+    }
 
     private function menu_items($items) // желательно вынести стили в часть описания меню
     {
@@ -31,29 +47,28 @@ class ui
 
     public function load_menu()
     {
-      $app=app::init();
         if(is_readable($this->menu_file))
         {
             require $this->menu_file;
             if(isset($menu))
             {
               foreach ($menu as $name => $items) {
-                $app->data('<ul class="nav navbar-nav">'.PHP_EOL,$name);
-                $app->data($this->menu_items($items),$name);
-                $app->data('</ul>'.PHP_EOL,$name);
+                $this->app->data('<ul class="nav navbar-nav">'.PHP_EOL,$name);
+                $this->app->data($this->menu_items($items),$name);
+                $this->app->data('</ul>'.PHP_EOL,$name);
               }
             }
         } else {
-          $app->log('debug','menu file not found');
+          $this->app->log('debug','menu file not found');
         }
     }
 
     public function messages()
     {
-      $app=app::init();
-      $err=$app->log->get('err');
-      $info=$app->log->get('info');
-      $debug=$app->log->get('debug');
+      $log=my::module('log');
+      $err=$log->get('err');
+      $info=$log->get('info');
+      $debug=$log->get('debug');
       if($err!='')
       {
         $err='<div class="alert alert-danger alert-dismissible fade in" role="alert">
@@ -61,7 +76,7 @@ class ui
         <span aria-hidden="true">×</span></button>
         '.htmlspecialchars($err).'
         </div>';
-        $app->data($err,'messages');
+        $this->app->data($err,'messages');
       }
       if($info!='')
       {
@@ -70,12 +85,12 @@ class ui
         <span aria-hidden="true">×</span></button>
         '.htmlspecialchars($info).'
         </div>';
-        $app->data($info,'messages');
+        $this->app->data($info,'messages');
       }
       if($debug!='')
       {
         $debug='<pre>'.htmlspecialchars($debug).'</pre>';
-        $app->data($debug,'messages');
+        $this->app->data($debug,'messages');
       }
     }
 
@@ -115,8 +130,8 @@ return '<button id="show_'.$modal_id.'" type="button" class="btn btn-success btn
     public function render_breadcrumb()
     {
       $result='';
-      $app=app::init();
-      $breadcrumb=$app->data->get_breadcrumb();
+      $appdata=my::module('appdata');
+      $breadcrumb=$appdata->get_breadcrumb();
       $count=count($breadcrumb);
       if($count>0)
       {
@@ -132,24 +147,25 @@ return '<button id="show_'.$modal_id.'" type="button" class="btn btn-success btn
         }
         $result.="</ol>\n";
       }
-      $app->data($result,'breadcrumb');
+      $appdata->set($result,'breadcrumb');
     }
 
-    public function render($template_file)
+    public function render($template_path='')
     {
-      $app=app::init();
       $result='';
-      if(is_readable($template_file))
+      $appdata=my::module('appdata');
+      if($template_path==''){ $template_path=$this->template_path; }
+      if(is_readable($template_path))
       {
-        $app->data('BWEB','title');
-        $app->data(BRAND,'brand');
+        $this->app->data('BWEB','title');
+        $this->app->data(BRAND,'brand');
         // render
         $this->load_menu();
         //$app->log('debug',print_r(get_included_files(),true));
         $this->messages();
         $this->render_breadcrumb();
-        $blocks=$app->data->get_blocks();
-        $result=file_get_contents($template_file);
+        $blocks=$appdata->get_blocks();
+        $result=file_get_contents($template_path);
         foreach($blocks as $alias => $content)
         {
             $tag="<!--@$alias-->";
@@ -163,7 +179,7 @@ return '<button id="show_'.$modal_id.'" type="button" class="btn btn-success btn
 
     public function jsFile($src)
     {
-      \app::init()->data('<script type="text/javascript" src="'.$src.'"></script>','js');
+      $this->app->data('<script type="text/javascript" src="'.$src.'"></script>','js');
     }
 
 }

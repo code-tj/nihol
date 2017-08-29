@@ -11,7 +11,7 @@ class user
     {
       $this->init();
       $this->es_check(); // check - is session needs to be extended
-      //app::init()->log('debug','uid='.$this->get('uid').', gid='.$this->get('gid').', gids='.print_r($this->get('gids'),true));
+      //my::log('debug','uid='.$this->get('uid').', gid='.$this->get('gid').', gids='.print_r($this->get('gids'),true));
     }
 
     public function session_start()
@@ -100,12 +100,11 @@ class user
 
     public function es_make($ses) // make Session Longer
     {
-      $app=\app::init();
+      $db=my::module('db');
       $id=md5(microtime().$ses['uid']);
-      if($app->db())
+      if($db->connected())
       {
         // remove previous records for this uid
-        $db=$app->db;
         $stmt=$db->h->prepare('DELETE FROM `user-sessions` WHERE `ses-uid`=:uid;');
         $stmt->execute(array('uid'=>$ses['uid']));
         $db->qcount();
@@ -121,10 +120,9 @@ class user
       if($this->uid==0 && isset($_COOKIE[AL.'_es']))
       {
         $es_id=$this->clean_str($_COOKIE[AL.'_es']);
-        $app=app::init();
-        if($app->db())
+        $db=my::module('db');
+        if($db->connected())
         {
-          $db=$app->db;
           $stmt=$db->h->prepare('SELECT * FROM `user-sessions` WHERE `ses-id`=:id;');
           $stmt->execute(array('id'=>$es_id));
           $db->qcount();
@@ -138,7 +136,7 @@ class user
             $this->session_set('gids',$ses['gids']);
             $this->session_set('user',$ses['user']);
             $this->init();
-            $app->log('debug','[user] session restored');
+            my::log('debug','[user] session restored');
           } else {
             unset($_COOKIE[AL.'_es']);
             setcookie(AL.'_es', null, -1, '/');
@@ -161,10 +159,9 @@ class user
         setcookie(AL.'_es', null, -1, '/');
         if($full)
         {
-          $app=app::init();
-          if($app->db())
+          $db=my::module('db');
+          if($db->connected())
           {
-            $db=$app->db;
             $stmt=$db->h->prepare('DELETE FROM `user-sessions` WHERE `ses-uid`=:uid;');
             $stmt->execute(array('uid'=>$this->uid));
             $db->qcount();

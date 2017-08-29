@@ -4,115 +4,56 @@ set_include_path(get_include_path().PATH_SEPARATOR.'./app/lib/');
 set_include_path(get_include_path().PATH_SEPARATOR.CORE.'lib/');
 spl_autoload_register();
 
-class config{
+class my
+{
+  protected static $app=null;
 
-  private $config=array();
+  protected function __construct(){}
+  protected function __clone(){}
 
-  public function load($file_path)
+  public static function app()
   {
-    if(is_readable($file_path))
-		{
-			require $file_path;
-			$this->config=$cfg;
-		} else {
-			echo 'config not found';
-      exit;
-		}
+      if(!isset(static::$app)) { static::$app = new app(); }
+      return static::$app;
   }
 
-  public function set($key,$value)
+  public static function log($type,$msg)
   {
-    $this->config[$key]=$value;
+      if(isset(static::$app)) {
+        static::$app->log($type,$msg);
+      }
   }
 
-  public function get($key)
+  public static function data($content,$block='main')
   {
-    if(isset($this->config[$key]))
-    {
-      return $this->config[$key];
-    } else {
-      return '';
-    }
+      if(isset(static::$app)) {
+        static::$app->data($content,$block);
+      }
   }
 
-  public function get_array($prefix='',$clean=true)
+  public static function module($name)
+  {
+      $module=null;
+      if(isset(static::$app))
+      {
+        $module=static::$app->module($name);
+      }
+      return $module;
+  }
+
+  public static function user()
+  {
+      return my::module('user');
+  }
+
+  public static function regex($s,$regex='/^[a-zA-Z0-9_]+$/')
 	{
-		$result=array();
-		if($prefix!='')
-		{
-			$prefix.='_';
-			$len=strlen($prefix);
-			foreach ($this->config as $key => $value)
-			{
-				if(substr($key,0,$len)==$prefix)
-				{
-					$result[$key]=$value;
-					if($clean) $this->config[$key]='';
-				}
-			}
-		}
-		return $result;
+		if(preg_match($regex,$s))
+    {
+      return true;
+    } else {
+      return false;
+    }
 	}
 
-}
-
-abstract class model
-{
-
-}
-
-abstract class view
-{
-
-}
-
-abstract class controller
-{
-  protected $model=null;
-  protected $view=null;
-}
-
-class module
-{
-    public $controller=null;
-    private $c='';
-    private $act='';
-    function __construct($c='',$act='')
-    {
-      // GET parameters
-      if($c=='' && isset($_GET['c']))
-      {
-        $c=$_GET['c'];
-        if($c!='' && isset($_GET['act'])){$act=$_GET['act'];}
-      }
-      // default value
-      if($c==''){$c='page';}
-      // check parameters
-      $app=app::init();
-      if($app::regex($c) && ($app::regex($act) || $act==''))
-      {
-        // checking user access
-        if($app->user->ac($c,$act))
-    		{
-          // try to load controller
-          $path="\\mvc\\c\\".$c.'_c';
-          if(class_exists($path))
-          {
-            $this->controller = new $path();
-            $this->controller->action($act);
-            $this->c=$c;
-            $this->act=$act;
-          } else {
-        		$app->log('err','Module not found');
-          }
-
-        } else {
-          $app->log('err','Access denied');
-        }
-      } else {
-        $app->log('err','Wrong URL parameters');
-      }
-    }
-    public function name(){return $this->c;}
-    public function action(){return $this->act;}
 }

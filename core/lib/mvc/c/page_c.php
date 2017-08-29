@@ -2,25 +2,22 @@
 namespace mvc\c;
 
 class page_c extends \controller
-
 {
 
     public function action($act='')
     {
-      $app=\app::init();
       if($act=='')
       {
         $this->homepage();
       } else {
-        $app->data($this->page($act));
+        \my::data($this->page($act));
       }
 
     }
 
     public function homepage()
     {
-      $app=\app::init();
-      $user=$app->user;
+      $user=\my::user();
       if(!$user->isGuest())
       {
         $path="./app/pages/user.php";
@@ -28,10 +25,10 @@ class page_c extends \controller
         if(is_readable($path)){
           include($path);
         } else {
-          $app->log('err','Page not found.');
+          \my::log('err','Page not found.');
         }
       } else {
-        $app->data($this->page('guest'));
+        \my::data($this->page('guest'));
       }
     }
 
@@ -45,12 +42,10 @@ class page_c extends \controller
         {
             $result=file_get_contents($path);
         } else {
-            $app=\app::init();
-            $app->log('err','Page not found'); // ... translation
+            \my::log('err','Page not found'); // ... translation
         }
       } else {
-        $app=\app::init();
-        $app->log('err','Incorrect page alias'); // ... translation
+        \my::log('err','Incorrect page alias'); // ... translation
       }
       return $result;
     }

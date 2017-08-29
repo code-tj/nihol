@@ -57,7 +57,6 @@ class user_v extends \view
 
   public function iforgot_form($model,$cp_alias='cp3')
   {
-    $app=\app::init();
     $result='';
     $show_form=true;
     if(isset($_GET['link']))
@@ -75,7 +74,8 @@ class user_v extends \view
           if(!$reseted) $result.=$this->pwd_reset_form($link);
       }
     }
-    $app->user->session_start();
+    $user=\my::user();
+    $user->session_start();
     if(isset($_POST['f_user']) && isset($_POST['f_vcode']))
     {
       $test=$model->iforgot($_POST['f_user'],$_POST['f_vcode'],$cp_alias);
