@@ -14,43 +14,44 @@ class user_m extends \model
           $db=\my::module('db');
           if($db->connected())
           {
-            $stmt=$db->h->prepare('SELECT * FROM `users` WHERE `user` = ?;');
+            $stmt=$db->h->prepare('SELECT * FROM `users` WHERE `u-user` = ?;');
             $stmt->execute([$login]);
             $db->qcount();
             if($stmt->rowCount()==1)
             {
               $r=$stmt->fetch();
-              $salt=$r['salt'];
+              $salt=$r['u-salt'];
               $hpwd=md5(md5($pwd).$salt);
-              if($hpwd==$r['pwd'])
+              if($hpwd==$r['u-pwd'])
               {
-                if($r['enabled']==1)
+                if($r['u-enabled']==1)
                 {
-                  //\app::init()->log('debug','[user] authorization...');
                   $ses=array(
                     'uid'=>0,
                     'gid'=>0,
                     'gids'=>array(),
-                    'user'=>$r['user'],
+                    'user'=>'',
+                    'pid'=>0,
                   );
-                  $ses['uid']=(int) $r['uid'];
-  								$gids_tmp=explode(",",$r['gids']);
+                  $ses['uid']=(int) $r['u-id'];
+  								$gids_tmp=explode(",",$r['u-gids']);
                   foreach ($gids_tmp as $index => $gid_str) {
                     $ses['gids'][]=(int) $gid_str;
                   }
                   $ses['gid']=$ses['gids'][0];
-                  // save in session
-                  if(!isset($_COOKIE['PHPSESSID'])){session_start();}
+                  $ses['user']=$r['u-user'];
+                  $ses['pid']=(int) $r['u-profile'];
+                  // save session data
+                  if(session_status()==PHP_SESSION_NONE){session_start();}
                   $user=\my::user();
-                  $user->session_set('uid',$ses['uid']);
-                  $user->session_set('gid',$ses['gid']);
-                  $user->session_set('gids',$ses['gids']);
-                  $user->session_set('user',$ses['user']);
-                  // remember username
-                  setcookie(AL.'_lu', base64_encode(strrev(base64_encode($ses['user']))), time() + (86400 * 7), "/"); // 86400 = 1 day
-                  // extend session (longer session)
-                  $user->es_make($ses);
-                  ///\app::init()->log('debug',print_r($gids,true));
+                  $user->session->set('uid',$ses['uid']);
+                  $user->session->set('gid',$ses['gid']);
+                  $user->session->set('gids',$ses['gids']);
+                  $user->session->set('user',$ses['user']);
+                  $user->session->set('pid',$ses['pid']);
+                  // store username in cookie
+                  setcookie(AL.'_lu', base64_encode(strrev(base64_encode($ses['user']))), time() + (86400 * 7), "/"); // 86400 = 1 day (*7=1 week)
+                  $user->session->extend($ses['uid'],$ses); // extend session (if enabled) [is executed once during authorization, if we will move to user obj - should exec more?]
                   header('Location: ./'); exit;
                 } else {
                   \my::log('err','Account is currently locked.');
@@ -77,10 +78,10 @@ class user_m extends \model
     public function logout()
     {
       $user=\my::user();
-      if($user->session_get('uid')!='')
+      $uid=$user->get('uid');
+      if($uid>0)
       {
-        $user->es_clean(); // clean - extend session
-        $user->session_remove_all(); // removes session data only for specific app
+        $user->session->clean($uid); // removes session data only for specific app
         header('Location: ./'); exit;
       } else {
         \my::log('err','You not signed in.');
@@ -98,7 +99,7 @@ class user_m extends \model
           $db=\my::module('db');
           if($db->connected())
           {
-            $sql='UPDATE `users` SET ``'; //?
+            $sql='UPDATE `users` SET ``'; //? not colpleted !!!
             $stmt=$db->h->prepare($sql);
             ///$stmt->execute(array(':user'=>$username));
             $db->qcount();
@@ -113,7 +114,6 @@ class user_m extends \model
     {
       $valid=false;
       $len=strlen($value);
-      // validation ...
       switch ($type) {
         case 'login':
           if(\my::regex($value,'/^[a-z0-9]+$/') && ($len>=3 && $len<128))
@@ -153,15 +153,15 @@ class user_m extends \model
             $db=\my::modules('user');
             if($db->connected())
             {
-              $sql='SELECT `uid`,`profile`,`user`,`pid`,`email` FROM `users` LEFT OUTER JOIN `hr-people` ON `profile`=`pid` WHERE `user` = :user;';
+              $sql='SELECT `uid`,`profile`,`u-user`,`pid`,`email` FROM `users` LEFT OUTER JOIN `hr-people` ON `profile`=`pid` WHERE `u-user` = :user;';
               $stmt=$db->h->prepare($sql);
               $stmt->execute(array(':user'=>$username));
               $db->qcount();
               if($stmt->rowCount()==1)
               {
                 $r=$stmt->fetch();
-                $email=trim($r['email']);
-                $uid=(int) $r['uid'];
+                $email=trim($r['u-email']);
+                $uid=(int) $r['u-uid'];
                 if($email!='')
                 {
                   // make hash
@@ -215,7 +215,7 @@ class user_m extends \model
       $db=\my::module('db');
       if($db->connected())
       {
-        // clean old records
+        // clean old iforgot records
         $sql='DELETE FROM `user-forgot` WHERE `ft-time` < NOW() OR `ft-status`=1;';
         $stmt=$db->h->prepare($sql);
         $stmt->execute();

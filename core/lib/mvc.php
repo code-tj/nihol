@@ -48,10 +48,12 @@ class mvc
 class controller
 {
 	protected $app=null;
+	protected $user=null;
 
 	function __construct()
 	{
 		$this->app=my::app();
+		$this->user=my::user();
 	}
 
 }
@@ -76,4 +78,37 @@ class view
 		$this->data=my::module('appdata');
 		$this->ui=my::module('ui');
 	}
+
+	public function date_out($date)
+	{
+		if($date!='') $date = date('d.m.Y',strtotime($date));
+		return $date;
+	}
+
+	public function date_in($date)
+	{
+		if($date!='') $date = date('Y-m-d',strtotime($date));
+		return $date;
+	}
+
+	public function YesNo($bool)
+	{
+		if($bool)
+		{
+			return 'Yes';
+		} else {
+			return 'No';
+		}
+	}
+
+	public function YesNoMarker($bool)
+	{
+		if($bool)
+		{
+			return '<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>';
+		} else {
+			return '<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>';
+		}
+	}
+
 }

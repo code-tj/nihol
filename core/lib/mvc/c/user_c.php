@@ -28,15 +28,13 @@ class user_c extends \controller
         case 'profile':
           if(!\my::user()->isGuest())
           {
-            $this->model = new \mvc\m\profile_m();
-            $this->view = new \mvc\v\profile_v();
-            \my::data($this->view->show($this->model));
-          } else {
-            \my::log('err','You are not authorized');
+            $this->model = new \mvc\m\profiles_m();
+            $this->view = new \mvc\v\profiles_v();
+            \my::data($this->view->profile($this->model->read(\my::user()->get('pid'))));
           }
           break;
 
-        case 'forgot':
+        case 'forgot': // -> assistance
           $this->model = new \mvc\m\user_m();
           $this->view = new \mvc\v\user_v();
           \my::data($this->view->iforgot_form($this->model));
