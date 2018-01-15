@@ -3,37 +3,37 @@ class app
 {
 	private $modules = array();
 
-	public function load_module($name,$opt=[])
+	public function load($module_name,$options=[])
 	{
-		if(!isset($this->modules[$name]))
+		if(!isset($this->modules[$module_name]))
 		{
-			$this->modules[$name] = new $name($opt);
+			$this->modules[$module_name] = new $module_name($options);
 		}
 	}
 
-	public function module($name)
+	public function module($module_name)
 	{
-		if(isset($this->modules[$name]))
+		if(isset($this->modules[$module_name]))
 		{
-			return $this->modules[$name];
+			return $this->modules[$module_name];
 		} else {
 			return null;
 		}
 	}
 
-	public function log($type,$msg)
+	public function log($log_type,$msg)
 	{
-		$this->modules['log']->set($type,$msg);
+		$this->modules['log']->set($log_type,$msg);
 	}
 
-	public function data($content,$block='main')
+	public function data($content,$block_name='main')
 	{
-		$this->modules['appdata']->set($content,$block);
+		$this->modules['appdata']->set($content,$block_name);
 	}
 
-	public function t($str) // it's for translation (for the future)
+	public function t($s) // translation
 	{
-		return $str;
+		return $s;
 	}
 
 	private function stop()
@@ -53,15 +53,15 @@ class app
 
 */
 
-	public function run($config_path)
+	public function run($config_file='config.php')
 	{
-		$this->load_module('cfg',['path'=>$config_path]);
-		$this->load_module('log');
-		$this->load_module('db',$this->module('cfg')->gets('db',true));
-		$this->load_module('appdata');
-		$this->load_module('user');
-		$this->load_module('ui',$this->module('cfg')->gets('ui'));
-		$this->load_module('mvc');
+		$this->load('config',['config_file'=>$config_file]);
+		$this->load('log');
+		$this->load('db',$this->module('config')->options('db',true));
+		$this->load('appdata');
+		$this->load('user');
+		$this->load('ui',$this->module('config')->options('ui'));
+		$this->load('mvc');
 		$this->module('ui')->render();
 		$this->stop();
 	}

@@ -14,17 +14,17 @@ class user_m extends \model
           $db=\my::module('db');
           if($db->connected())
           {
-            $stmt=$db->h->prepare('SELECT * FROM `users` WHERE `u-user` = ?;');
+            $stmt=$db->h->prepare('SELECT * FROM `n-users` WHERE `usr-login` = ?;');
             $stmt->execute([$login]);
             $db->qcount();
             if($stmt->rowCount()==1)
             {
               $r=$stmt->fetch();
-              $salt=$r['u-salt'];
+              $salt=$r['usr-salt'];
               $hpwd=md5(md5($pwd).$salt);
-              if($hpwd==$r['u-pwd'])
+              if($hpwd==$r['usr-pwd'])
               {
-                if($r['u-enabled']==1)
+                if($r['usr-status']==1)
                 {
                   $ses=array(
                     'uid'=>0,
@@ -33,14 +33,14 @@ class user_m extends \model
                     'user'=>'',
                     'pid'=>0,
                   );
-                  $ses['uid']=(int) $r['u-id'];
-  								$gids_tmp=explode(",",$r['u-gids']);
+                  $ses['uid']=(int) $r['usr-uid'];
+  								$gids_tmp=explode(",",$r['usr-gids']);
                   foreach ($gids_tmp as $index => $gid_str) {
                     $ses['gids'][]=(int) $gid_str;
                   }
                   $ses['gid']=$ses['gids'][0];
-                  $ses['user']=$r['u-user'];
-                  $ses['pid']=(int) $r['u-profile'];
+                  $ses['user']=$r['usr-login'];
+                  $ses['pid']=(int) $r['usr-pid'];
                   // save session data
                   if(session_status()==PHP_SESSION_NONE){session_start();}
                   $user=\my::user();
@@ -49,9 +49,12 @@ class user_m extends \model
                   $user->session->set('gids',$ses['gids']);
                   $user->session->set('user',$ses['user']);
                   $user->session->set('pid',$ses['pid']);
+                  // update lastlogin time
+                  $this->update_login_time($ses['uid']);
                   // store username in cookie
                   setcookie(AL.'_lu', base64_encode(strrev(base64_encode($ses['user']))), time() + (86400 * 7), "/"); // 86400 = 1 day (*7=1 week)
-                  $user->session->extend($ses['uid'],$ses); // extend session (if enabled) [is executed once during authorization, if we will move to user obj - should exec more?]
+                  // extend session
+                  $user->session->extend($ses['uid'],$ses);
                   header('Location: ./'); exit;
                 } else {
                   \my::log('err','Account is currently locked.');
@@ -72,6 +75,17 @@ class user_m extends \model
       } else {
         \my::log('err','Username or password is empty.');
         \my::data(\mvc\v\user_v::loginForm());
+      }
+    }
+
+    public function update_login_time($uid)
+    {
+      $db=\my::module('db');
+      if($db->connected())
+      {
+        $stmt=$db->h->prepare('UPDATE `n-users` SET `usr-lastlogin` = NOW() WHERE `usr-uid` = :uid;');
+        $stmt->execute(array('uid'=>$uid));
+        $db->qcount();
       }
     }
 

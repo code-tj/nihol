@@ -19,6 +19,43 @@ class ui
 
     }
 
+    public static function html_select($array,$opt=array()){
+      $result='';
+      if(!isset($opt['key'])) $opt['key']='';
+      if(!isset($opt['attr'])) $opt['attr']='';
+      if(!isset($opt['select'])) $opt['select']=0;
+      if(!isset($opt['zero_text'])) $opt['zero_text']='';
+      if(count($array)>0)
+      {
+          $result.='<select'.$opt['attr'].'>'.PHP_EOL;
+          if($opt['zero_text']!='')
+          {
+              if($opt['select']<=0)
+              {
+                  $result.='<option value="0" selected="selected">'.$opt['zero_text'].'</option>'.PHP_EOL;
+              } else {
+                  $result.='<option value="0">'.$opt['zero_text'].'</option>'.PHP_EOL;
+              }
+          }
+          if($opt['key']=='')
+          {
+              foreach ($array as $k => $v)
+              {
+                  if($opt['select']===$k){$s=' selected="selected"';} else {$s='';}
+                  $result.='<option value="'.$k.'"'.$s.'>'.htmlspecialchars($v).'</option>'.PHP_EOL;
+              }
+          } else {
+              foreach ($array as $k => $v)
+              {
+                  if($opt['select']===$k){$s=' selected="selected"';} else {$s='';}
+                  $result.='<option value="'.$k.'"'.$s.'>'.htmlspecialchars($v[$opt['key']]).'</option>'.PHP_EOL;
+              }
+          }
+          $result.='</select>'.PHP_EOL;
+      }
+      return $result;
+    }
+
     private function menu_items($items) // желательно вынести стили в часть описания меню
     {
       $result='';
@@ -94,27 +131,32 @@ class ui
       }
     }
 
-    public static function modal($title='',$body='',$btn='',$modal_id='modal1',$frm_attr='',$btn_text='Update')
+    public static function modal($opt)
     {
-return '
+      if(!isset($opt['id'])) $opt['id']='modal1';
+      if(!isset($opt['title'])) $opt['title']='Modal title';
+      if(!isset($opt['body'])) $opt['body']='...';
+      if(!isset($opt['frm_attr'])) $opt['frm_attr']='';
+      if(!isset($opt['default_btn_text'])) $opt['default_btn_text']='Default';
+      return '
 <!-- Modal -->
-<div class="modal fade" id="'.$modal_id.'" tabindex="-1" role="dialog" aria-labelledby="'.$modal_id.'_label" aria-hidden="true">
+<div class="modal fade" id="'.$opt['id'].'" tabindex="-1" role="dialog" aria-labelledby="'.$opt['id'].'_label" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-    <form'.$frm_attr.'>
+    <form'.$opt['frm_attr'].'>
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
         <span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="'.$modal_id.'_label">'.$title.'</h4>
+        <h4 class="modal-title" id="'.$opt['id'].'_label">'.$opt['title'].'</h4>
       </div>
-      <div id="'.$modal_id.'_body" class="modal-body">
-        '.$body.'
+      <div id="'.$opt['id'].'_body" class="modal-body">
+        '.$opt['body'].'
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">'.\app::t('Close').'</button>
-        <input type="submit" id="'.$modal_id.'_btn" class="btn btn-primary" value="'.\app::t($btn_text).'">
+        <!--<button type="button" class="btn btn-default" data-dismiss="modal">'.\app::t('Close').'</button>-->
+        <input type="submit" id="'.$opt['id'].'_submit" class="btn btn-primary" value="'.\app::t($opt['default_btn_text']).'">
       </div>
-      </form>
+    </form>
     </div>
   </div>
 </div>
@@ -136,7 +178,7 @@ return '<button id="show_'.$modal_id.'" type="button" class="btn btn-success btn
       if($count>0)
       {
         $result.='<ol class="breadcrumb">'."\n";
-        $result.='<li><a href="./">Dashboard</a></li>'."\n";
+        $result.='<li><a href="./"><i class="glyphicon glyphicon-home"></i></a></li>'."\n";
         for ($i=0; $i < $count; $i++) {
           if(($i+1)==$count)
           {
@@ -157,7 +199,7 @@ return '<button id="show_'.$modal_id.'" type="button" class="btn btn-success btn
       if($template_path==''){ $template_path=$this->template_path; }
       if(is_readable($template_path))
       {
-        $this->app->data('BWEB','title');
+        $this->app->data(BRAND,'title');
         $this->app->data(BRAND,'brand');
         // render
         $this->load_menu();
@@ -177,9 +219,32 @@ return '<button id="show_'.$modal_id.'" type="button" class="btn btn-success btn
       echo $result;
     }
 
-    public function jsFile($src)
+    public static function boolMarker($bool,$color=false)
+  	{
+  		$class='';
+  		if($bool)
+  		{
+  			if($color) $class=' text-success';
+  			return '<span class="glyphicon glyphicon-ok'.$class.'" aria-hidden="true"></span>';
+  		} else {
+  			if($color) $class=' text-danger';
+  			return '<span class="glyphicon glyphicon-remove'.$class.'" aria-hidden="true"></span>';
+  		}
+  	}
+
+    public static function YesNo($bool)
+  	{
+  		if($bool)
+  		{
+  			return 'Yes';
+  		} else {
+  			return 'No';
+  		}
+  	}
+
+    public static function norecords()
     {
-      $this->app->data('<script type="text/javascript" src="'.$src.'"></script>','js');
+      return '<div class="well" style="margin-top:20px;margin-bottom:20px;">No records found in the database.</div>';
     }
 
 }

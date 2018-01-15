@@ -70,16 +70,46 @@ class db
     public function get($sql,$opt=array())
     {
         $records=array();
-        $sth=$this->h->prepare($sql);
-        if(count($opt)>0)
+        if($this->connected())
         {
-          $sth->execute($opt);
-        } else {
-          $sth->execute();
+          $sth=$this->h->prepare($sql);
+          if(count($opt)>0)
+          {
+            $sth->execute($opt);
+          } else {
+            $sth->execute();
+          }
+          $this->qcount();
+          if($sth->rowCount()>0){
+              $records=$sth->fetchAll();
+          }
         }
-        $this->qcount();
-        if($sth->rowCount()>0){
-            $records=$sth->fetchAll();
+        return $records;
+    }
+
+    public function get_records($sql,$key='',$opt=array())
+    {
+        $records=array();
+        if($this->connected())
+        {
+          $sth=$this->h->prepare($sql);
+          if(count($opt)>0)
+          {
+            $sth->execute($opt);
+          } else {
+            $sth->execute();
+          }
+          $this->qcount();
+          if($sth->rowCount()>0){
+            if($key!='')
+            {
+              while($r=$sth->fetch()){
+  	        		$records[$r[$key]]=$r;
+  	        	}
+            } else {
+              $records=$sth->fetchAll();
+            }
+	        }
         }
         return $records;
     }
@@ -87,6 +117,11 @@ class db
     public function qcount()
     {
       $this->queries_counter++;
+    }
+
+    public function queries_number()
+    {
+      return $this->queries_counter;
     }
 
 }

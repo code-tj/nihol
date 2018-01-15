@@ -2,7 +2,7 @@
 class user_session
 {
   private $started=false;
-  private $ext=true; // extended session flag
+  private $extend=true; // extended session flag
 
   function __construct()
   {
@@ -51,7 +51,7 @@ class user_session
 
   public function clean($uid)
   {
-    if($this->ext)
+    if($this->extend)
     {
       $this->ext_clean($uid);
     }
@@ -72,7 +72,7 @@ class user_session
 
   public function extend($uid,$ses) // make Session Longer
   {
-    if($this->ext)
+    if($this->extend)
     {
       $db=my::module('db');
       $es_id=md5(microtime().$uid);
@@ -93,7 +93,7 @@ class user_session
   public function ext()
   {
     $uid = (int) $this->get('uid');
-    if($uid==0 && $this->ext)
+    if($uid==0 && $this->extend)
     {
       if(isset($_COOKIE[AL.'_es']))
       {

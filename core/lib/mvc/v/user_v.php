@@ -153,4 +153,62 @@ class user_v extends \view
 return $result;
   }
 
+  public static function login_form_modal()
+  {
+    $ui=\my::module('ui');
+    if(isset($_COOKIE[AL.'_lu']))
+    {
+      $last_username=htmlspecialchars(base64_decode(strrev(base64_decode($_COOKIE[AL.'_lu']))));
+    } else {
+      $last_username='';
+    }
+    $body='<div class="input-group" style="margin-top:20px;margin-bottom:14px;">
+<span class="input-group-addon"><i class="glyphicon glyphicon-user"></i>
+</span>
+<input type="text" class="form-control" id="m_username" name="m_username" value="'.$last_username.'" placeholder="username" style="font-size:120%;">
+</div>
+<div class="input-group" style="margin-bottom:20px;">
+<span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i>
+</span>
+<input type="password" class="form-control" id="m_password" name="m_password" value="" placeholder="password" style="font-size:120%;">
+</div>';
+    $modal_opt=array(
+      'id' => 'LoginFormModal',
+      'title' => 'Please login:',
+      'body' => $body,
+      'default_btn_text' => 'Login',
+    );
+    \my::data($ui::modal($modal_opt));
+    $js='
+$(document).ready(function(){
+
+  $("#LoginFormModal").modal("show");
+
+  $("#LoginFormModal").on("shown.bs.modal", function () {
+    if($("#m_username").val()!="")
+    {
+      $("#m_password").focus();
+    } else {
+      $("#m_username").focus();
+    }
+  })
+
+  $("#LoginFormModal_submit").click(function(e){
+    e.preventDefault();
+    var m_username = $("#m_username").val();
+    var m_password = $("#m_password").val();
+    if(m_username!="" && m_password!="")
+    {
+      $.post( "./?c=user&act=login", { n_username: m_username, n_password: m_password })
+        .done(function() {
+          location.reload();
+      });
+    }
+  });
+
+});
+    ';
+    \my::data('<script type="text/javascript">'.$js.'</script>'."\n",'js');
+  }
+
 }

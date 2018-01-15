@@ -31,6 +31,7 @@ class user
             $this->name=htmlspecialchars($this->session->get('user'));
             $this->pid=$pid;
         }
+        $this->profile = new user_profile($this->pid);
       }
     }
 
@@ -67,10 +68,20 @@ class user
 
     public function ac($c,$act)
     {
-      //my::log('debug','access control: c='.htmlspecialchars($c).', act='.htmlspecialchars($act));
       $granted=false;
+      
+      if($this->isGuest())
+      {
+        if($c!='user' && $c!='page')
+        {
+          \mvc\v\user_v::login_form_modal();
+        }
+      }
+      //my::log('debug','access control: c='.htmlspecialchars($c).', act='.htmlspecialchars($act));
+
       if($this->gid==1) {$granted=true;}
       if($c=='user' && $act=='login'){$granted=true;}
+      if($c=='user' && $act=='logout'){$granted=true;}
       if($c=='page'){$granted=true;}
       // check ... should be completed!
 
